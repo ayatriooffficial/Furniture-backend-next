@@ -46,7 +46,7 @@ const createMapPlaces = async (req, res) => {
 
     res.status(201).json({ message: "New map created successfully!...." });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     res.status(409).json({ message: error.message });
   }
 };

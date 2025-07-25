@@ -21,7 +21,7 @@ exports.createImgSection = async (req, res) => {
     // console.log("imagesection added");
   } catch (error) {
     res.status(500).json({ message: error.message });
-    console.log("error in creating image");
+    // console.log("error in creating image");
   }
 };
 
@@ -82,7 +82,7 @@ exports.createPosterSection = async (req, res) => {
     // console.log("poster section added");
   } catch (error) {
     res.status(500).json({ message: error.message });
-    console.log("Error in creating poster section:", error);
+    // console.log("Error in creating poster section:", error);
   }
 };
 

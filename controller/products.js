@@ -26,8 +26,8 @@ const safeJSONParse = (str) => {
 exports.createProduct = async (req, res) => {
   try {
     // Log incoming request details
-    console.log('\n=== NEW PRODUCT CREATION REQUEST ===');
-    console.log('Request Body:', JSON.stringify(req.body, null, 2));
+    // console.log('\n=== NEW PRODUCT CREATION REQUEST ===');
+    // console.log('Request Body:', JSON.stringify(req.body, null, 2));
 
     // Extract image URLs from request body
     const { 
@@ -37,15 +37,15 @@ exports.createProduct = async (req, res) => {
       coreValueImageUrls = [] 
     } = req.body;
 
-    console.log('Provided Image URLs:', {
-      mainImages: imageUrls,
-      colorImages: colorImageUrls,
-      featuresImages: featureImageUrls,
-      coreValuesImages: coreValueImageUrls
-    });
+    // console.log('Provided Image URLs:', {
+    //   mainImages: imageUrls,
+    //   colorImages: colorImageUrls,
+    //   featuresImages: featureImageUrls,
+    //   coreValuesImages: coreValueImageUrls
+    // });
 
     if (!req.body) {
-      console.log('Request rejected - Missing product data');
+      // console.log('Request rejected - Missing product data');
       return res.status(406).send("Please provide product data");
     }
 
@@ -85,24 +85,24 @@ exports.createProduct = async (req, res) => {
       faqs,
     } = req.body;
 
-    console.log('Important Product Fields:', JSON.stringify({
-      title,
-      patternNumber,
-      room,
-      shortDescription: shortDescription?.substring(0, 50) + (shortDescription?.length > 50 ? '...' : ''),
-      color,
-      category,
-      subCategory,
-      productType,
-      authorId,
-      offer
-    }, null, 2));
+    // console.log('Important Product Fields:', JSON.stringify({
+    //   title,
+    //   patternNumber,
+    //   room,
+    //   shortDescription: shortDescription?.substring(0, 50) + (shortDescription?.length > 50 ? '...' : ''),
+    //   color,
+    //   category,
+    //   subCategory,
+    //   productType,
+    //   authorId,
+    //   offer
+    // }, null, 2));
 
     // Process external offers
     let mappedExternalOffers = [];
     if (req.body.externalOffers) {
       try {
-        console.log('Processing External Offers:', req.body.externalOffers);
+        // console.log('Processing External Offers:', req.body.externalOffers);
         let offersData = req.body.externalOffers;
         let parsedOffers;
         if (typeof offersData === "string") {
@@ -118,7 +118,7 @@ exports.createProduct = async (req, res) => {
             .replace(/\s+/g, " ")
             .trim();
 
-          console.log('Cleaned Offers String:', offersData);
+          // console.log('Cleaned Offers String:', offersData);
           parsedOffers = JSON.parse(offersData);
         } else {
           parsedOffers = offersData;
@@ -140,7 +140,7 @@ exports.createProduct = async (req, res) => {
           description: offer.description,
         }));
 
-        console.log('Final Mapped Offers:', JSON.stringify(mappedExternalOffers, null, 2));
+        // console.log('Final Mapped Offers:', JSON.stringify(mappedExternalOffers, null, 2));
       } catch (error) {
         console.error('Offer Processing Error:', {
           message: error.message,
@@ -164,11 +164,11 @@ exports.createProduct = async (req, res) => {
       });
     }
 
-    console.log('Mapped Color Data:', JSON.stringify({
-      colorCount: mappedColors.length,
-      firstColor: mappedColors[0]?.color,
-      totalImages: mappedColors.flatMap(c => c.images).length
-    }, null, 2));
+    // console.log('Mapped Color Data:', JSON.stringify({
+    //   colorCount: mappedColors.length,
+    //   firstColor: mappedColors[0]?.color,
+    //   totalImages: mappedColors.flatMap(c => c.images).length
+    // }, null, 2));
 
     // Process features and core values
     const mappedFeatures = features.map((feature, index) => ({
@@ -182,8 +182,8 @@ exports.createProduct = async (req, res) => {
       image: coreValueImageUrls[index],
     }));
 
-    console.log('Mapped Features:', JSON.stringify(mappedFeatures, null, 2));
-    console.log('Mapped Core Values:', JSON.stringify(mappedCoreValues, null, 2));
+    // console.log('Mapped Features:', JSON.stringify(mappedFeatures, null, 2));
+    // console.log('Mapped Core Values:', JSON.stringify(mappedCoreValues, null, 2));
 
     // Process dimensions
     const structuredDimensions = dimensions?.map(dimension => ({
@@ -195,9 +195,9 @@ exports.createProduct = async (req, res) => {
     // Fetch author data
     let author = null;
     if (authorId) {
-      console.log(`Fetching author data for ID: ${authorId}`);
+      // console.log(`Fetching author data for ID: ${authorId}`);
       author = await UserDB.findById(authorId);
-      console.log(`Author found: ${author ? author._id : 'Not found'}`);
+      // console.log(`Author found: ${author ? author._id : 'Not found'}`);
     }
 
     // Process pricing and offers
@@ -210,7 +210,7 @@ exports.createProduct = async (req, res) => {
 
     let offerType = null;
     if (offer && discountedprice) {
-      console.log(`Processing offer: ${offer} with price ${discountedprice}`);
+      // console.log(`Processing offer: ${offer} with price ${discountedprice}`);
       const offerData = await Offer.findOne({ type: offer });
       if (offerData) {
         mappedDiscountPrice = {
@@ -220,12 +220,12 @@ exports.createProduct = async (req, res) => {
           chunkSize: offerData.chunkSize,
         };
         offerType = offerData.type;
-        console.log(`Applied offer: ${offerType}`, mappedDiscountPrice);
+        // console.log(`Applied offer: ${offerType}`, mappedDiscountPrice);
       }
     }
 
     // Validate category
-    console.log(`Validating category: ${category} > ${subCategory}`);
+    // console.log(`Validating category: ${category} > ${subCategory}`);
     const categoryData = await categoriesDB
       .findOne({ name: category })
       .select("subcategories");
@@ -279,26 +279,26 @@ exports.createProduct = async (req, res) => {
       faqs: faqs || [],
     });
 
-    console.log('Final Product Document:', JSON.stringify({
-      ...newProduct.toObject(),
-      // Omit large arrays for readability
-      productImages: ['...truncated...'],
-      dimensions: ['...truncated...'],
-      features: ['...truncated...'],
-      coreValues: ['...truncated...']
-    }, null, 2));
+    // console.log('Final Product Document:', JSON.stringify({
+    //   ...newProduct.toObject(),
+    //   // Omit large arrays for readability
+    //   productImages: ['...truncated...'],
+    //   dimensions: ['...truncated...'],
+    //   features: ['...truncated...'],
+    //   coreValues: ['...truncated...']
+    // }, null, 2));
 
     await newProduct.save();
-    console.log('Product successfully saved to database');
+    // console.log('Product successfully saved to database');
     res.status(201).json({ message: "New Product created successfully!" });
 
   } catch (error) {
-    console.error('Product Creation Error:', {
-      message: error.message,
-      stack: error.stack,
-      requestBody: JSON.stringify(req.body, null, 2),
-      timestamp: new Date().toISOString()
-    });
+    // console.error('Product Creation Error:', {
+    //   message: error.message,
+    //   stack: error.stack,
+    //   requestBody: JSON.stringify(req.body, null, 2),
+    //   timestamp: new Date().toISOString()
+    // });
     res.status(500).json({ 
       error: "Error while creating new product",
       message: error.message
@@ -428,7 +428,7 @@ exports.fetchProductsByCategoryAndSubCategory = async (req, res) => {
   }
 
   if (page && itemsPerPage) {
-    console.log("this run");
+    // console.log("this run");
     try {
       const skip = (page - 1) * itemsPerPage;
       const products = await productsDB
@@ -623,7 +623,7 @@ exports.createReview = async (req, res) => {
 
     res.status(201).send({ message: "Review Created", review: review });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     res.status(500).send({ message: "Error in creating review" });
   }
 };
@@ -646,7 +646,7 @@ exports.createSpecialReview = async (req, res) => {
     const createdReview = await specialReview.save();
     res.status(201).send({ message: "Review Created", review: createdReview });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     res.status(500).send({ message: "Error in creating review" });
   }
 };
@@ -739,10 +739,10 @@ exports.fetchProductsByCategory = async (req, res) => {
         .limit(updatedItemsPerPage)
         .populate("ratings");
 
-      console.log(products.length);
+      // console.log(products.length);
       const totalproducts = await productsDB.find(query);
 
-      console.log(totalproducts.length);
+      // console.log(totalproducts.length);
 
       return res
         .status(200)
@@ -815,7 +815,7 @@ exports.updateDemandType = async (req, res) => {
 exports.updateSpecialPrice = async (req, res) => {
   try {
     const { productId, specialprice } = req.body;
-    console.log(req.body);
+    // console.log(req.body);
 
     if (!productId || !specialprice) {
       return res
@@ -872,7 +872,7 @@ exports.getAllProductsByOffer = async (req, res) => {
     const { type } = req.params;
     const { itemsPerPage, page } = req.query;
 
-    console.log(itemsPerPage, page);
+    // console.log(itemsPerPage, page);
 
     // if (type === "all") {
     //   const products = await productsDB.find();
@@ -890,7 +890,7 @@ exports.getAllProductsByOffer = async (req, res) => {
         .skip(skip)
         .limit(itemsPerPage);
 
-      console.log("Offer", products.length);
+      // console.log("Offer", products.length);
 
       const Totalproducts = await productsDB.find({
         offer: { $regex: new RegExp(type, "i") },
@@ -949,7 +949,7 @@ exports.requestForProduct = async (req, res) => {
     await sendEmailForProductRequest(email, product.productTitle);
     res.status(201).send({ message: "Request created successfully" });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     res.status(500).send({ message: "Error in creating request" });
   }
 };
@@ -969,7 +969,7 @@ exports.getAllProductByAuthorID = async (req, res) => {
 
 exports.likeProduct = async (req, res) => {
   try {
-    console.log("check");
+    // console.log("check");
     const { productId, userId } = req.body;
     const product = await productsDB.findById(productId);
     if (!product) {
@@ -986,12 +986,12 @@ exports.likeProduct = async (req, res) => {
     product.likes += 1;
     await product.save();
     await user.save();
-    console.log(product.likes);
+    // console.log(product.likes);
     res
       .status(200)
       .json({ message: "Product liked successfully", likes: product.likes });
   } catch (error) {
-    console.log(error.message);
+    // console.log(error.message);
     res.status(400).json({ message: error.message });
   }
 };
@@ -1040,7 +1040,7 @@ exports.rankedProductsFoEachCategory = async (req, res) => {
     }
     res.status(200).json(rankedProducts);
   } catch (error) {
-    console.log(error.message);
+    // console.log(error.message);
     res.status(400).json({ message: error.message });
   }
 };
@@ -1178,7 +1178,7 @@ exports.generateMaintenancePdf = async (req, res) => {
         res.status(500).json({ error: "Failed to generate PDF" });
       });
   } catch (error) {
-    console.log(error.message);
+    // console.log(error.message);
     res.status(400).json({ message: error.message });
   }
 };
@@ -1315,7 +1315,7 @@ exports.generateInstallationPdf = async (req, res) => {
         res.status(500).json({ error: "Failed to generate PDF" });
       });
   } catch (error) {
-    console.log(error.message);
+    // console.log(error.message);
     res.status(400).json({ message: error.message });
   }
 };
@@ -1329,7 +1329,7 @@ exports.fetchAccessoriesByCategory = async (req, res) => {
     });
     res.status(200).json(accessories);
   } catch (error) {
-    console.log(error.message);
+    // console.log(error.message);
     res.status(400).json({ message: error.message });
   }
 };

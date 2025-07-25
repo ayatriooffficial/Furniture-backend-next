@@ -12,7 +12,7 @@ const Purchase = require("../model/Purchase"); // Correct import
 
 exports.makePayment = async (req, res) => {
   try {
-    console.log("Make Pay is called now", req.body);
+    //console.log("Make Pay is called now", req.body);
     const {
       amount,
       callbackUrl,
@@ -63,7 +63,7 @@ exports.makePayment = async (req, res) => {
 
     discountAmt += deliveryPrice || 0;
     discountAmt = Math.max(1, discountAmt - (otherExternalOffersDiscount || 0));
-    console.log("Discounted Amount:", discountAmt);
+    //console.log("Discounted Amount:", discountAmt);
 
     const payload = {
       amount: Math.round(discountAmt * 100),
@@ -73,7 +73,7 @@ exports.makePayment = async (req, res) => {
         merchantUserId: "MUI123",
       },
     };
-    console.log("Razorpay payload:", payload);
+    //console.log("Razorpay payload:", payload);
 
     const response = await axios({
       method: "POST",
@@ -95,7 +95,7 @@ exports.makePayment = async (req, res) => {
       throw error;
     });
 
-    console.log("Razorpay response:", response.data);
+    //console.log("Razorpay response:", response.data);
     res.status(200).json({
       data: {
         orderId: response.data.id,
@@ -113,7 +113,7 @@ exports.makePayment = async (req, res) => {
 
 exports.paymentCallback = async (req, res) => {
   try {
-    // console.log("paymentCallback called with:", {
+    // //console.log("paymentCallback called with:", {
     //   params: req.params,
     //   body: req.body,
     // });
@@ -122,17 +122,17 @@ exports.paymentCallback = async (req, res) => {
 
     // Validate inputs
     if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
-      console.log("Missing Razorpay parameters");
+      //console.log("Missing Razorpay parameters");
       return res.status(400).json({ message: "Missing Razorpay parameters" });
     }
 
     // Find order
     const order = await Order.findById(orderId);
     if (!order) {
-      console.log("Order not found:", orderId);
+      //console.log("Order not found:", orderId);
       return res.status(404).json({ message: "Order not found" });
     }
-    console.log("Order found:", order);
+    //console.log("Order found:", order);
 
     // Verify signature
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -144,16 +144,16 @@ exports.paymentCallback = async (req, res) => {
       .createHmac("sha256", keySecret)
       .update(razorpay_order_id + "|" + razorpay_payment_id)
       .digest("hex");
-    console.log("Signatures:", { generated: generatedSignature, received: razorpay_signature });
+    //console.log("Signatures:", { generated: generatedSignature, received: razorpay_signature });
 
     if (generatedSignature !== razorpay_signature) {
-      console.log("Signature verification failed");
+      //console.log("Signature verification failed");
       return res.status(400).json({ message: "Payment verification failed" });
     }
 
     // Check if order is already processed
     if (order.payment && order.paymentStatus === "SUCCESS") {
-      console.log("Order already processed:", orderId);
+      //console.log("Order already processed:", orderId);
       return res.status(200).json({
         message: "Payment already processed",
         isFreeSample: order.isFreeSample,
@@ -165,19 +165,19 @@ exports.paymentCallback = async (req, res) => {
     order.paymentStatus = "SUCCESS";
     order.transactionId = razorpay_payment_id;
     await order.save();
-    console.log("Order updated:", orderId);
+    //console.log("Order updated:", orderId);
 
     // Handle external offer
     let externalOffer = null;
     if (order?.amount?.discount > 0 && order.bankId) {
       externalOffer = await ExternalOffer.findOne({ bankId: order.bankId });
-      console.log("External offer:", externalOffer || "None");
+      //console.log("External offer:", externalOffer || "None");
     }
 
     // Check for existing Purchase
     const existingPurchase = await Purchase.findOne({ orderId: order._id });
     if (existingPurchase) {
-      console.log("Purchase already exists:", existingPurchase._id);
+      //console.log("Purchase already exists:", existingPurchase._id);
     } else {
       // Create Purchase record
       const purchase = new Purchase({
@@ -187,7 +187,7 @@ exports.paymentCallback = async (req, res) => {
         userType: order.userId ? "member" : "guest",
       });
       await purchase.save();
-      console.log("Purchase created:", purchase._id);
+      //console.log("Purchase created:", purchase._id);
     }
 
     // Clear cart if not free sample
@@ -197,9 +197,9 @@ exports.paymentCallback = async (req, res) => {
         cart.items = [];
         cart.bill = 0;
         await cart.save();
-        console.log("Cart cleared:", order.cartId);
+        //console.log("Cart cleared:", order.cartId);
       } else {
-        console.log("Cart not found:", order.cartId);
+        //console.log("Cart not found:", order.cartId);
       }
     }
 
@@ -214,7 +214,7 @@ exports.paymentCallback = async (req, res) => {
           cart: order.items || [],
           address: order.address,
         });
-        console.log("Order confirmation email sent");
+        //console.log("Order confirmation email sent");
       } else {
         await sendFreeSampleRequestEmail({
           email,
@@ -223,14 +223,14 @@ exports.paymentCallback = async (req, res) => {
           cart: order.items || [],
           address: order.address,
         });
-        console.log("Free sample email sent");
+        //console.log("Free sample email sent");
       }
     } catch (emailError) {
       console.error("Email sending failed:", emailError.message);
       // Continue despite email failure
     }
 
-    console.log("Everything works great in payment callback");
+    //console.log("Everything works great in payment callback");
     return res.status(200).json({
       message: "Payment successful",
       isFreeSample: order.isFreeSample,

@@ -37,7 +37,7 @@ router.get(
         sameSite: "None",
         domain: ".ayatrio.com",
       });
-      console.log("path");
+      //console.log("path");
       const redirectUrl = `${baseURL}/${path}?token=${token}`;
       res.redirect(redirectUrl);
       await sendEmailToUser(email);
@@ -80,7 +80,7 @@ router.put("/update-profile", verifyToken, async (req, res) => {
     );
 
     res.json({ message: "Profile updated successfully", user: updatedUser });
-    console.log("Profile updated successfully", updatedUser);
+    //console.log("Profile updated successfully", updatedUser);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
@@ -113,7 +113,7 @@ router.get("/user/:id", async (req, res) => {
 
 // Logout route
 router.get("/logout", (req, res, next) => {
-  console.log("Logging out...");
+  //console.log("Logging out...");
   req.logout(function (err) {
     if (err) {
       return next(err);
@@ -128,7 +128,7 @@ router.put(
   async (req, res) => {
     try {
       const { id } = req.params;
-      console.log(req.body);
+      //console.log(req.body);
       const user = await userDB.findById(id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -157,7 +157,7 @@ router.put(
       user.links = { ...req.body.links };
       
       await user.save();
-      console.log({ user });
+      //console.log({ user });
 
       res.status(200).json({ message: "User updated successfully", user });
     } catch (error) {
@@ -170,16 +170,16 @@ router.put(
 router.post("/create-user", async (req, res) => {
   try {
     const { displayName, email, phone } = req.body;
-    console.log(req.body);
-    console.log(email);
+    //console.log(req.body);
+    //console.log(email);
     if (!displayName || !email || !phone) {
-      console.log("Name, phone, email  are required");
+      //console.log("Name, phone, email  are required");
       return res.status(400).json({ message: "Name and email are required" });
     }
     if (email) {
       const existingUser = await userDB.findOne({ email });
       if (existingUser) {
-        console.log("User already exists with this email");
+        //console.log("User already exists with this email");
         return res
           .status(400)
           .json({ message: "User already exists with this email" });
@@ -187,18 +187,18 @@ router.post("/create-user", async (req, res) => {
     }
 
     if (phone) {
-      console.log(phone);
+      //console.log(phone);
       const existingUser = await userDB.findOne({ phone });
-      console.log(existingUser);
+      //console.log(existingUser);
       if (existingUser) {
-        console.log("User already exists with this phone");
+        //console.log("User already exists with this phone");
         return res
           .status(400)
           .json({ message: "User already exists with this phone" });
       }
     }
 
-    console.log("Creating user");
+    //console.log("Creating user");
 
     const user = new userDB({ displayName, email, phone });
     await user.save();

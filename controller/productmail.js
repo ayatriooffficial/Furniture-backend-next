@@ -32,7 +32,7 @@ exports.sendPurchaseConfirmation = async (req, res) => {
       text: message // Plain text body
     });
 
-    console.log('Message sent: %s', info.messageId);
+    // console.log('Message sent: %s', info.messageId);
     res.status(200).send('Purchase confirmation email sent successfully!');
   } catch (error) {
     console.error('Error occurred while sending email:', error);
