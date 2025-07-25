@@ -62,7 +62,7 @@ exports.deleteUrgency = async (req, res) => {
     await urgency.deleteOne();
     res.status(200).json({ message: "Urgency deleted successfully." });
   } catch (error) {
-    console.log(error)
+    // console.log(error)
     res.status(500).json({ error: error.message || "Internal server error" });
   }
 };

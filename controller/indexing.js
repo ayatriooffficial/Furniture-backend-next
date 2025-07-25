@@ -21,7 +21,7 @@ exports.getIndexing = async (req, res) => {
     
     jwtClient.authorize(function(err, tokens) {
       if (err) {
-        console.log(err);
+        // console.log(err);
         return res.status(500).send("Failed to authorize with Google API.");
       }
       const options = {
@@ -40,7 +40,7 @@ exports.getIndexing = async (req, res) => {
       const request = require('request');
       request(options, (err, resp, body) => {
         if (err) {
-          console.log(err);
+          // console.log(err);
           return res.status(500).send("Failed to send URL to Google Indexing API.");
         }
         // console.log(body);
@@ -49,7 +49,7 @@ exports.getIndexing = async (req, res) => {
     });
   }
   catch(error){
-    console.log(error);
+    // console.log(error);
   }
 
 };
