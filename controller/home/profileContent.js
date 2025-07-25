@@ -4,10 +4,10 @@ const userdb = require("../../model/User");
 const getProfileContent = async (req, res) => {
   try {
     const profileContent = await ProfileContentDb.find().populate("user");
-    console.log(profileContent);
+    // console.log(profileContent);
     res.json(profileContent);
   } catch (error) {
-    console.log(error)
+    // console.log(error)
     res.json({ message: error });
   }
 };

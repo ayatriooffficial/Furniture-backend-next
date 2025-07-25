@@ -35,11 +35,11 @@ exports.checkout = async (req, res) => {
 
   const selectedProducts = await productsDB.findOne({ productId });
   // const userProducts = userDeviceMap[deviceId];
-  console.log(selectedProducts);
+  //console.log(selectedProducts);
 
   // Calculate total price
   const totalPrice = selectedProducts.price + 50; // delivery charge
-  console.log(totalPrice);
+  //console.log(totalPrice);
 
   // more logic here (e.g., payment processing, order creation, etc.)
 
@@ -146,7 +146,7 @@ exports.order = async (req, res) => {
       orderId: orderInstance._id.toString(),
     });
   } catch (error) {
-    console.log(error);
+    //console.log(error);
     res.status(500).json({ message: error.message });
   }
 };

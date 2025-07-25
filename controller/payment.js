@@ -113,10 +113,10 @@ exports.makePayment = async (req, res) => {
 
 exports.paymentCallback = async (req, res) => {
   try {
-    console.log("paymentCallback called with:", {
-      params: req.params,
-      body: req.body,
-    });
+    // console.log("paymentCallback called with:", {
+    //   params: req.params,
+    //   body: req.body,
+    // });
     const { orderId } = req.params;
     const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
 

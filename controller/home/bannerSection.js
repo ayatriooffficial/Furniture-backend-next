@@ -5,7 +5,7 @@ const Room = require("../../model/room");
 // POST: '/api/createBannerSection'  - homepageRoutes.js
 exports.createBannerSection = async (req, res) => {
   try {
-    console.log(req.body);
+    // console.log(req.body);
     const { text1, text2, link,  roomId1, roomId2, mainHeading, description } = req.body;
     const room1 = await Room.findById(roomId1);
     if (!room1) {
@@ -17,7 +17,7 @@ exports.createBannerSection = async (req, res) => {
     }
 
    const mappedRoom = [{ text: text1, room: room1._id }, { text: text2, room: room2._id }];
-   console.log(mappedRoom);
+  //  console.log(mappedRoom);
     const bannerSection = new bannerSectionDB({
       grid: mappedRoom,
       mainHeading,

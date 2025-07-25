@@ -19,7 +19,7 @@ exports.saveCategories = async (req, res) => {
 exports.saveCitiesAndHobbies = async (req, res) => {
   try {
     const data = req.body;
-    console.log(data);
+    // console.log(data);
 
     // Validate the request body against the schema
     const newData = new citiesAndHobbiesDB(data);
@@ -117,7 +117,7 @@ const categoryQueries = preferredCategories.map(category => {
   const capitalizedCategory = capitalize(category.name);
   const capitalizedSubcategories = subcategories.map(subcategory => capitalize(subcategory));
   
-  console.log('Processing category:', capitalizedCategory, 'with subcategories:', capitalizedSubcategories);
+  // console.log('Processing category:', capitalizedCategory, 'with subcategories:', capitalizedSubcategories);
   
   return {
     category: capitalizedCategory,
@@ -125,11 +125,11 @@ const categoryQueries = preferredCategories.map(category => {
   };
 });
 
-console.log('categoryQueries:', categoryQueries);
+// console.log('categoryQueries:', categoryQueries);
 
-    console.log({ $or: categoryQueries });
+    // console.log({ $or: categoryQueries });
     const subcategoriesArray = preferredCategories.flatMap(category => category.subcategory);
-console.log(subcategoriesArray);
+// console.log(subcategoriesArray);
 
     // Use $or to match any of the conditions
     const products = await productsDB.find({ $or:  

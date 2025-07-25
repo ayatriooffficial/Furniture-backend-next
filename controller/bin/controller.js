@@ -313,7 +313,7 @@ exports.createCategory = async (req, res) => {
 exports.updatePdescCategoryById = async (req, res) => {
   try {
     const { categoryId, pdesc } = req.body;
-    console.log("Requested pdesc:", pdesc);
+    // //console.log("Requested pdesc:", pdesc);
 
     if (!categoryId) {
       return res.status(400).json({ error: "Category ID is required." });
@@ -374,7 +374,7 @@ exports.updatePdescCategoryById = async (req, res) => {
 exports.addCategoryFeatures = async (req, res) => {
   try {
     const { categoryId, feature } = req.body;
-    console.log(req.body);
+    // //console.log(req.body);
 
     if (!categoryId || !feature) {
       return res.status(400).json({ 
@@ -427,7 +427,7 @@ exports.addCategoryFeatures = async (req, res) => {
 
     const category = await categoriesDB.findById(categoryId);
     if (!category) return res.status(404).json({ error: "Category not found." });
-    console.log(newFeature);
+    // //console.log(newFeature);
     category.features.push(newFeature);
     const savedCategory = await category.save();
 
@@ -448,12 +448,12 @@ exports.addCategoryFeatures = async (req, res) => {
 exports.deleteCategoryFeatures = async (req, res) => {
   try {
     const { categoryId, featureId } = req.params;
-    console.log(
-      "Received categoryId:",
-      categoryId,
-      "and featureId:",
-      featureId
-    );
+    // //console.log(
+    //   "Received categoryId:",
+    //   categoryId,
+    //   "and featureId:",
+    //   featureId
+    // );
 
     if (
       !mongoose.Types.ObjectId.isValid(categoryId) ||
@@ -509,7 +509,7 @@ exports.deleteFaq = async (req, res) => {
 
     const category = await categoriesDB.findById(categoryId);
     if (!category) {
-      console.log("Category not found");
+      //console.log("Category not found");
       return res.status(404).json({ error: "Category not found." });
     }
 
@@ -517,13 +517,13 @@ exports.deleteFaq = async (req, res) => {
       (faq) => faq._id.toString() === faqId
     );
     if (faqIndex === -1) {
-      console.log("FAQ not found in category");
+      //console.log("FAQ not found in category");
       return res.status(404).json({ error: "FAQ not found." });
     }
 
     category.faq.splice(faqIndex, 1);
     await category.save();
-    console.log("FAQ deleted successfully");
+    // //console.log("FAQ deleted successfully");
 
     res.status(200).json({
       message: "FAQ deleted successfully.",
@@ -540,13 +540,13 @@ exports.deleteSubCategoryFaq = async (req, res) => {
 
     const category = await categoriesDB.findById(categoryId);
     if (!category) {
-      console.log("Category not found");
+      //console.log("Category not found");
       return res.status(404).json({ error: "Category not found." });
     }
 
     const subCategory = category.subcategories.id(subCategoryId);
     if (!subCategory) {
-      console.log("Subcategory not found");
+      //console.log("Subcategory not found");
       return res.status(404).json({ error: "Subcategory not found." });
     }
 
@@ -554,13 +554,13 @@ exports.deleteSubCategoryFaq = async (req, res) => {
       (faq) => faq._id.toString() === faqId
     );
     if (faqIndex === -1) {
-      console.log("FAQ not found in category");
+      //console.log("FAQ not found in category");
       return res.status(404).json({ error: "FAQ not found." });
     }
 
     subCategory.faq.splice(faqIndex, 1);
     await category.save();
-    console.log("FAQ deleted successfully");
+    //console.log("FAQ deleted successfully");
 
     res.status(200).json({ message: "FAQ deleted successfully.", subCategory });
   } catch (error) {
@@ -574,13 +574,13 @@ exports.deleteSubCategoryFeature = async (req, res) => {
 
     const category = await categoriesDB.findById(categoryId);
     if (!category) {
-      console.log("Category not found");
+      //console.log("Category not found");
       return res.status(404).json({ error: "Category not found." });
     }
 
     const subCategory = category.subcategories.id(subCategoryId);
     if (!subCategory) {
-      console.log("Subcategory not found");
+      //console.log("Subcategory not found");
       return res.status(404).json({ error: "Subcategory not found." });
     }
 
@@ -588,13 +588,13 @@ exports.deleteSubCategoryFeature = async (req, res) => {
       (feature) => feature._id.toString() === featureId
     );
     if (featureIndex === -1) {
-      console.log("Feature not found in category");
+      //console.log("Feature not found in category");
       return res.status(404).json({ error: "Feature not found." });
     }
 
     subCategory.features.splice(featureIndex, 1);
     await category.save();
-    console.log("Feature deleted successfully");
+    //console.log("Feature deleted successfully");
 
     res
       .status(200)
@@ -610,13 +610,13 @@ exports.deleteSubCategoryProduct = async (req, res) => {
 
     const category = await categoriesDB.findById(categoryId);
     if (!category) {
-      console.log("Category not found");
+      //console.log("Category not found");
       return res.status(404).json({ error: "Category not found." });
     }
 
     const subCategory = category.subcategories.id(subCategoryId);
     if (!subCategory) {
-      console.log("Subcategory not found");
+      //console.log("Subcategory not found");
       return res.status(404).json({ error: "Subcategory not found." });
     }
 
@@ -624,13 +624,13 @@ exports.deleteSubCategoryProduct = async (req, res) => {
       (product) => product._id.toString() === productId
     );
     if (productIndex === -1) {
-      console.log("product not found in category");
+      //console.log("product not found in category");
       return res.status(404).json({ error: "Feature not found." });
     }
 
     subCategory.products.splice(productIndex, 1);
     await category.save();
-    console.log("product deleted successfully");
+    //console.log("product deleted successfully");
 
     res
       .status(200)
@@ -643,7 +643,7 @@ exports.deleteSubCategoryProduct = async (req, res) => {
 
 exports.addFaqToCategory = async (req, res) => {
   try {
-    console.log("Request Body:", req.body);
+    // //console.log("Request Body:", req.body);
     const { categoryId } = req.params;
     const { heading, description, linkText } = req.body; // Fixed: changed linkTexT to linkText
 
@@ -700,7 +700,7 @@ exports.getCategoryByName = async (req, res) => {
       name: categoryName,
     });
 
-    console.log("req",req)
+    // //console.log("req",req)
     if (!category) {
       return res.status(404).json({ message: "Category not found." });
     }
@@ -736,14 +736,14 @@ exports.getCategoryWithSubCategoryByName = async (req, res) => {
 
 exports.updateCategoryMetadata = async (req, res) => {
   try {
-    console.log("Request Body:", req.body);
+    // //console.log("Request Body:", req.body);
     const { categoryName } = req.params;
-    console.log("Received:", categoryName);
+    // //console.log("Received:", categoryName);
     const { metadataTitle } = req.body;
     const { h1Tag } = req.body;
 
-    console.log("Received:", { categoryName, metadataTitle });
-    console.log("Received h1tag:", h1Tag);
+    // //console.log("Received:", { categoryName, metadataTitle });
+    // //console.log("Received h1tag:", h1Tag);
 
     const category = await categoriesDB.findOneAndUpdate(
       { name: { $regex: new RegExp(categoryName, "i") } },
@@ -768,7 +768,7 @@ exports.updateCategoryh1title = async (req, res) => {
     const { categoryName } = req.params;
     const { h1title } = req.body;
 
-    console.log("Received:", { categoryName, h1title });
+    // //console.log("Received:", { categoryName, h1title });
 
     const category = await categoriesDB.findOneAndUpdate(
       { name: { $regex: new RegExp(categoryName, "i") } },
@@ -777,11 +777,11 @@ exports.updateCategoryh1title = async (req, res) => {
     );
 
     if (!category) {
-      console.log("Category not found for name:", categoryName);
+      //console.log("Category not found for name:", categoryName);
       return res.status(404).json({ message: "Category not found." });
     }
 
-    console.log("Updated Category:", category);
+    // //console.log("Updated Category:", category);
 
     res.status(200).json({ message: "Category h1title updated successfully." });
   } catch (error) {
@@ -802,17 +802,17 @@ exports.updateSubCategoryField = async (req, res) => {
         .json({ message: "Field name and value are required." });
     }
 
-    console.log("Received:", { categoryId, subCategoryId, field, value });
+    // //console.log("Received:", { categoryId, subCategoryId, field, value });
 
     // Fetch the category by ID
     let category = await categoriesDB.findById(categoryId);
 
     if (!category) {
-      console.log("Category not found for Id:", categoryId);
+      //console.log("Category not found for Id:", categoryId);
       return res.status(404).json({ message: "Category not found." });
     }
 
-    // console.log(category);
+    // //console.log(category);
 
     // Find the specific subcategory
     const subCategory = category.subcategories?.find(
@@ -820,7 +820,7 @@ exports.updateSubCategoryField = async (req, res) => {
     );
 
     if (!subCategory) {
-      console.log("Subcategory not found for Id:", subCategoryId);
+      //console.log("Subcategory not found for Id:", subCategoryId);
       return res.status(404).json({ message: "Subcategory not found." });
     }
 
@@ -847,13 +847,13 @@ exports.updateSubCategoryh1title = async (req, res) => {
       return res.status(400).json({ message: "h1title is required." });
     }
 
-    console.log("Received:", { categoryId, subCategoryId, h1title });
+    // //console.log("Received:", { categoryId, subCategoryId, h1title });
 
     // Fetch the category by ID
     let category = await categoriesDB.findById(categoryId);
 
     if (!category) {
-      console.log("Category not found for Id:", categoryId);
+      // //console.log("Category not found for Id:", categoryId);
       return res.status(404).json({ message: "Category not found." });
     }
 
@@ -862,7 +862,7 @@ exports.updateSubCategoryh1title = async (req, res) => {
     );
 
     if (!subCategory) {
-      console.log("Subcategory not found for Id:", subCategoryId);
+      //console.log("Subcategory not found for Id:", subCategoryId);
       return res.status(404).json({ message: "Subcategory not found." });
     }
 
@@ -888,13 +888,13 @@ exports.updateSubCategorypdesc = async (req, res) => {
       return res.status(400).json({ message: "pdesc is required." });
     }
 
-    console.log("Received:", { categoryId, subCategoryId, pdesc });
+    // //console.log("Received:", { categoryId, subCategoryId, pdesc });
 
     // Fetch the category by ID
     let category = await categoriesDB.findById(categoryId);
 
     if (!category) {
-      console.log("Category not found for Id:", categoryId);
+      // //console.log("Category not found for Id:", categoryId);
       return res.status(404).json({ message: "Category not found." });
     }
 
@@ -904,7 +904,7 @@ exports.updateSubCategorypdesc = async (req, res) => {
     );
 
     if (!subCategory) {
-      console.log("Subcategory not found for Id:", subCategoryId);
+      //console.log("Subcategory not found for Id:", subCategoryId);
       return res.status(404).json({ message: "Subcategory not found." });
     }
 
@@ -925,7 +925,7 @@ exports.updateSubCategorypdesc = async (req, res) => {
 exports.updatePdescCategoryByName = async (req, res) => {
   try {
     const { categoryName, pdescInfo } = req.body;
-    console.log("Requested pdesc:", pdescInfo);
+    // //console.log("Requested pdesc:", pdescInfo);
 
     if (!categoryName) {
       return res.status(400).json({ error: "Category name is required." });
@@ -1120,7 +1120,7 @@ exports.CreateSubCategory = async (req, res) => {
     };
 
     category.subcategories.push(newSubcategory);
-    console.log("New Subcategory:", newSubcategory);
+    // //console.log("New Subcategory:", newSubcategory);
 
     await category.save();
 
@@ -1293,7 +1293,7 @@ exports.getSubCategoryDetailByCategoryAndSubCategoryName = async (req, res) => {
 exports.getallProductsBySubCategory = async (req, res) => {
   const { categoryName, subCategoryName } = req.query;
 
-  // console.log(categoryName, subCategoryName)
+  // //console.log(categoryName, subCategoryName)
   try {
     // Find all products by category
     const products = await Product.find({ category: categoryName });

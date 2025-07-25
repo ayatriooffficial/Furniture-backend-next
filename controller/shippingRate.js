@@ -57,17 +57,17 @@ exports.calculateShippingDetails = async (req, res) => {
     if (!distance || isNaN(distance)) {
       return res.status(400).json({ message: "Invalid distance provided" });
     }
-    console.log("Calculating shipping details for distance:", distance);
+    //console.log("Calculating shipping details for distance:", distance);
     const shippingRates = await ShippingRate.find();
     for (let rate of shippingRates) {
       if (distance >= rate.minDistance && distance <= rate.maxDistance) {
-        console.log("Shipping charge:", rate.charge, "Estimated delivery:", rate.estimatedDelivery);
+        //console.log("Shipping charge:", rate.charge, "Estimated delivery:", rate.estimatedDelivery);
         return res.status(200).json({ charge: rate.charge, estimatedDelivery: rate.estimatedDelivery });
       }
     }
     res.status(200).json({ charge: null, estimatedDelivery: null}); // or a default charge if you want
   } catch (err) {
-    console.log(err)
+    //console.log(err)
     throw new Error("Error calculating shipping charge");
   }
 };

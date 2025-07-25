@@ -18,7 +18,7 @@ exports.createImgSection = async (req, res) => {
 
     res.status(201).json({ message: "Images Section added successfully! " });
 
-    console.log("imagesection added");
+    // console.log("imagesection added");
   } catch (error) {
     res.status(500).json({ message: error.message });
     console.log("error in creating image");
@@ -30,7 +30,7 @@ exports.getImgSection = async (req, res) => {
   try {
     const info = await ImgSchemaDB.find();
     res.status(200).json(info);
-    console.log("imagesection fetched");
+    // console.log("imagesection fetched");
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -49,7 +49,7 @@ exports.deleteImgSection = async (req, res) => {
 
     // Fetch updated data after deletion
     const updatedData = await ImgSchemaDB.find();
-    console.log("image deleted ssuccesfully");
+    // console.log("image deleted ssuccesfully");
 
     res.json(updatedData);
   } catch (error) {
@@ -79,7 +79,7 @@ exports.createPosterSection = async (req, res) => {
     res
       .status(201)
       .json({ message: "poster Section added successfully!", posterSection });
-    console.log("poster section added");
+    // console.log("poster section added");
   } catch (error) {
     res.status(500).json({ message: error.message });
     console.log("Error in creating poster section:", error);
@@ -109,7 +109,7 @@ exports.deletePosterSection = async (req, res) => {
 
     // Fetch updated data after deletion
     const updatedData = await posterSchemaDB.find();
-    console.log("image deleted ssuccesfully");
+    // console.log("image deleted ssuccesfully");
 
     res.json(updatedData);
   } catch (error) {

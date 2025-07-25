@@ -10,7 +10,7 @@ const mongoose = require("mongoose");
 // POST 'api/increment-popularity/:id'
 exports.incrementPopularity = async (req, res) => {
   const { title } = req.query;
-  console.log("Incrementing popularity for product:", title);
+  // //console.log("Incrementing popularity for product:", title);
   try {
     await incrementPopularityUtil(title);
     res.json({ message: "Product popularity incremented successfully" });
@@ -23,7 +23,7 @@ exports.incrementPopularity = async (req, res) => {
 // Test endpoint to increment popularity and return updated category
 exports.testIncrementPopularity = async (req, res) => {
   const { title } = req.query;
-  console.log("Test incrementing popularity for product:", title);
+  //console.log("Test incrementing popularity for product:", title);
   try {
     // First, get the product to verify it exists
     const product = await productsDB.findOne({ productTitle: title });
@@ -31,9 +31,9 @@ exports.testIncrementPopularity = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
     
-    console.log("Found product:", product.productTitle);
-    console.log("Current popularity:", product.popularity);
-    console.log("Category:", product.category);
+    //console.log("Found product:", product.productTitle);
+    //console.log("Current popularity:", product.popularity);
+    //console.log("Category:", product.category);
     
     // Increment popularity
     await incrementPopularityUtil(title);
@@ -47,7 +47,7 @@ exports.testIncrementPopularity = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
     
-    console.log("Updated category popularity:", category.popularity);
+    //console.log("Updated category popularity:", category.popularity);
     
     res.json({ 
       message: "Test successful",
@@ -101,7 +101,7 @@ exports.trendingProducts = async (req, res) => {
 
 // exports.incrementSubCategoryPopularity = async (req, res) => {
 //   const { category, subCategory } = req.query;
-//   console.log(req.query);
+//   //console.log(req.query);
 //   try {
 //     await incrementSubCategoryPopularityUtil(category, subCategory);
 //     res.json({ message: "subCategory popularity incremented successfully" });
@@ -127,11 +127,11 @@ exports.trendingProducts = async (req, res) => {
 
 exports.trendingCategories = async (req, res) => {
   try {
-    console.log("Fetching trending categories from database:", mongoose.connection.db.databaseName);
+    // //console.log("Fetching trending categories from database:", mongoose.connection.db.databaseName);
     
     // First, let's check if we have any categories at all
     const allCategories = await categoriesDB.find();
-    console.log("Total categories in database:", allCategories.length);
+    //console.log("Total categories in database:", allCategories.length);
     
     if (allCategories.length === 0) {
       return res.status(404).json({ 
@@ -141,22 +141,22 @@ exports.trendingCategories = async (req, res) => {
     }
     
     // Log the first category to see its structure
-    console.log("Sample category:", JSON.stringify(allCategories[0], null, 2));
+    //console.log("Sample category:", JSON.stringify(allCategories[0], null, 2));
     
     // Check if any categories have popularity > 0
     const categoriesWithPopularity = allCategories.filter(cat => cat.popularity > 0);
-    console.log("Categories with popularity > 0:", categoriesWithPopularity.length);
+    //console.log("Categories with popularity > 0:", categoriesWithPopularity.length);
     
     // Get trending categories with detailed logging
     const trendingCategories = await categoriesDB
       .find()
       .sort({ popularity: -1 });
     
-    console.log("Found trending categories:", trendingCategories.length);
+    //console.log("Found trending categories:", trendingCategories.length);
     
     if (trendingCategories.length === 0) {
       // If we have categories but none are trending, let's return all categories
-      console.log("No trending categories found, returning all categories");
+      //console.log("No trending categories found, returning all categories");
       return res.json(allCategories);
     }
     

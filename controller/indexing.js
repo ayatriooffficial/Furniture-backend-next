@@ -43,7 +43,7 @@ exports.getIndexing = async (req, res) => {
           console.log(err);
           return res.status(500).send("Failed to send URL to Google Indexing API.");
         }
-        console.log(body);
+        // console.log(body);
         res.status(200).send(body);
       });
     });
