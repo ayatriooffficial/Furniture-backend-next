@@ -12,7 +12,7 @@ exports.createCart = async (req, res) => {
     selectedAccessories,
   } = req.body;
 
-  console.log("selectedServices", selectedServices)
+  // //console.log("selectedServices", selectedServices)
   // Ensure each accessory has a quantity of 1 if not provided
   const updatedAccessories = selectedAccessories?.map((accessory) => {
     if (!accessory.quantity) {
@@ -140,7 +140,7 @@ exports.createCart = async (req, res) => {
       return res.status(201).send(newCart);
     }
   } catch (error) {
-    console.log(error);
+    // //console.log(error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -149,7 +149,7 @@ exports.createCart = async (req, res) => {
 exports.updateCartItemQuantity = async (req, res) => {
   const { productId, quantity, deviceId } = req.body;
 
-  console.log("Upodate running");
+  //console.log("Upodate running");
 
   try {
     const cart = await CartDB.findOne({ owner: deviceId })
@@ -235,11 +235,11 @@ exports.getCart = async (req, res) => {
 exports.deleteCartItem = async (req, res) => {
   try {
     const { owner, productId } = req.query;
-    // console.log(req.query);
+    // //console.log(req.query);
 
-    // console.log("run deleted")
+    // //console.log("run deleted")
 
-    console.log(owner, productId);
+    //console.log(owner, productId);
     const cart = await CartDB.findOne({ owner: owner })
       .populate({
         path: "items.productId",
@@ -254,7 +254,7 @@ exports.deleteCartItem = async (req, res) => {
       })
       .exec();
 
-    // console.log(cart)
+    // //console.log(cart)
 
     // Check if the cart exists
     if (!cart) {
@@ -266,7 +266,7 @@ exports.deleteCartItem = async (req, res) => {
       (item) => item.productId._id.toString() === productId
     );
 
-    // console.log(productIndex)
+    // //console.log(productIndex)
 
     // Check if the product exists in the cart
     if (productIndex === -1) {
@@ -365,7 +365,7 @@ exports.increaseServiceQuantity = async (req, res) => {
 exports.addServicesToProduct = async (req, res) => {
   const { deviceId, productId, selectedServices } = req.body;
 
-  console.log("selectedServices",selectedServices)
+  //console.log("selectedServices",selectedServices)
 
   try {
     const cart = await CartDB.findOne({ owner: deviceId })
@@ -417,8 +417,8 @@ exports.addServicesToProduct = async (req, res) => {
 exports.deleteServiceFromProduct = async (req, res) => {
   try{
     const { deviceId, productId, serviceId } = req.body;
-    console.log(deviceId)
-    console.log(req.body)
+    //console.log(deviceId)
+    //console.log(req.body)
     const cart = await CartDB.findOne({ owner: deviceId })
       .populate({
         path: "items.productId",
@@ -440,7 +440,7 @@ exports.deleteServiceFromProduct = async (req, res) => {
     const productIndex = cart.items.findIndex(
       (item) => item.productId._id.toString() === productId
     );
-    console.log(productIndex)
+    //console.log(productIndex)
     if (productIndex === -1) {
       return res.status(404).send({ message: "Product not found in the cart" });
     }
@@ -463,7 +463,7 @@ exports.deleteServiceFromProduct = async (req, res) => {
     }, 0);
 
     await cart.save();
-    console.log(cart)
+    //console.log(cart)
     res.status(200).send(cart);
 } catch (error) {
   console.error(error);
@@ -518,7 +518,7 @@ exports.increaseAccessoriesQuantity = async (req, res) => {
     cart.items[productIndex].selectedAccessories[accessoryIndex].quantity =
       quantity;
 
-    // console.log(cart.items[productIndex].selectedAccessories[accessoryIndex].quantity)
+    // //console.log(cart.items[productIndex].selectedAccessories[accessoryIndex].quantity)
 
     cart.bill = cart.items.reduce((acc, curr) => {
       const itemTotal = curr.quantity * (curr.price || 0);
@@ -539,7 +539,7 @@ exports.increaseAccessoriesQuantity = async (req, res) => {
     await cart.save();
 
     // Log the updated selectedAccessories to verify
-    console.log(cart.items[productIndex].selectedAccessories);
+    //console.log(cart.items[productIndex].selectedAccessories);
 
     res.status(200).send(cart);
   } catch (error) {

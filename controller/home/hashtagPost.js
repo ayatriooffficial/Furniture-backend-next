@@ -24,7 +24,7 @@ exports.createHashtagPost = async (req, res) => {
       caption
     } = req.body;
 
-    console.log("Request body:", req.body);
+    // console.log("Request body:", req.body);
 
     // Validate required fields
     const requiredFields = ['id', 'mediaUrl', 'postUrl', 'categoryId', 'categoryName'];
@@ -121,7 +121,7 @@ exports.getHashtagPosts = async (req, res) => {
 
     res.status(200).json(info);
   } catch (error) {
-    console.log(error.message);
+    // console.log(error.message);
     res.status(500).json({ message: error.message });
   }
 };
@@ -172,7 +172,7 @@ exports.deleteHashtagPost = async (req, res) => {
         // Delete file from S3
         const command = new DeleteObjectCommand(params);
         await s3Client.send(command);
-        console.log(`Deleted image from S3: ${key}`);
+        // console.log(`Deleted image from S3: ${key}`);
       } catch (s3Error) {
         // Log error but continue with post deletion
         console.error("Error deleting image from S3:", s3Error);

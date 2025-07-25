@@ -88,7 +88,7 @@ exports.removeProductFromDemandType = async (req, res) => {
 exports.deleteDemandType = async (req, res) => {
   try {
     const { type } = req.params;
-    console.log(type);
+    //console.log(type);
     const demandType = await demandTypeDB.findOne({
       type: { $regex: new RegExp(type, "i") },
     });

@@ -270,7 +270,7 @@ async function sendEmailToUser(email) {
       };
 
       const info = await transporter.sendMail(mailOptions);
-      console.log("Email sent:", info.response);
+      //console.log("Email sent:", info.response);
 
       user.emailSent = true;
       await user.save();
@@ -282,7 +282,7 @@ async function sendEmailToUser(email) {
 }
 
 async function sendEmailForProductRequest(email, productName) {
-  console.log(email);
+  //console.log(email);
   try {
     const mailOptions = {
       from: process.env.SMTP_MAIL,
@@ -339,7 +339,7 @@ async function sendEmailForProductRequest(email, productName) {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.response);
+    //console.log("Email sent:", info.response);
   } catch (error) {
     console.error("Error sending email:", error);
     throw error; // Re-throw the error for the caller to handle
@@ -596,7 +596,7 @@ async function sendOrderConfirmationEmail(order, products) {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.response);
+    //console.log("Email sent:", info.response);
   } catch (error) {
     console.error("Error sending email:", error);
     throw error;
@@ -853,7 +853,7 @@ async function sendFreeSampleRequestEmail(order, products) {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.response);
+    //console.log("Email sent:", info.response);
   } catch (error) {
     console.error("Error sending email:", error);
     throw error;

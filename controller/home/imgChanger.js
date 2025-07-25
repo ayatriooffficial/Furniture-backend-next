@@ -9,7 +9,7 @@ exports.createImgChanger = async (req, res) => {
             .map((file) => file.location);
 
         const { desc, title } = req.body;
-        console.log(req.body)
+        // console.log(req.body)
         const imageInfo = new imageChangerDB({
             img: imageUrl,
             desc,

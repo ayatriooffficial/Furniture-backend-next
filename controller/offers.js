@@ -59,7 +59,7 @@ exports.getBankOffers = async (req, res) => {
 
     return res.status(200).json({ bankOffers: formattedBankOffers });
   } catch (error) {
-    console.log("Error in getting bank offers", error.message);
+    // console.log("Error in getting bank offers", error.message);
     res.status(500).json({ message: error.message || "Internal server error" });
   }
 };
@@ -83,7 +83,7 @@ exports.getExternalOffers = async (req, res) => {
 
     return res.status(200).json({ externalOffers: formattedExtOffers });
   } catch (error) {
-    console.log("Error in getting external offers", error.message);
+    // console.log("Error in getting external offers", error.message);
     res.status(500).json({ message: error.message || "Internal server error" });
   }
 };
@@ -94,7 +94,7 @@ exports.getExternalOfferApplicablePrice = async (req, res) => {
     //this request by client side should only be made when user ihas logged in
     const { userId, amount } = req.params;
 
-    console.log("Inside offers");
+    // console.log("Inside offers");
 
     if (!userId || !amount)
       return res
@@ -166,10 +166,10 @@ exports.getExternalOfferApplicablePrice = async (req, res) => {
 
     return res.status(200).json(data);
   } catch (error) {
-    console.log(
-      "Error in calculating external offer applicable price",
-      error.message
-    );
+    // console.log(
+    //   "Error in calculating external offer applicable price",
+    //   error.message
+    // );
     res.status(500).json({ error: error.message || "Internal server error" });
   }
 };

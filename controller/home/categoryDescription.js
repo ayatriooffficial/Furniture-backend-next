@@ -6,7 +6,7 @@ exports.create_categoryDescription = async (req, res) => {
             .filter((file) => file.fieldname === 'image')
             .map((file) => file.location);
 
-        console.log('images', imageUrl);
+        // console.log('images', imageUrl);
 
         const { imgTitle, review, occupation, category, reviewTitle, linkedln, ...circles } = req.body;
 

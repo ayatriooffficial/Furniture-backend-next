@@ -30,7 +30,7 @@ exports.create = async (req, res) => {
     if (!req.body) {
       return res.status(406).send("Please provide product data");
     }
-    console.log("Request body:", req.body); // Debug log
+    //console.log("Request body:", req.body); // Debug log
 
     const {
       heading,
@@ -130,7 +130,7 @@ exports.create = async (req, res) => {
     }
 
     const validateSlider = (slider) => {
-      console.log(slider);
+      //console.log(slider);
 
       if (!slider) {
         throw new Error("Invalid slider data");
@@ -238,7 +238,7 @@ exports.create = async (req, res) => {
     });
 
     await newRoom.save();
-    console.log("New Room Created:", newRoom);
+    //console.log("New Room Created:", newRoom);
 
     res.status(201).json({ message: "New Room created successfully!" });
   } catch (error) {

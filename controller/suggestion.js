@@ -38,7 +38,7 @@ exports.createSuggestion = async (req, res) => {
       if (room) {
         fiveGridRooms.push(room._id);
       } else {
-        console.log(`Room not found in fiveRooms.`);
+        //console.log(`Room not found in fiveRooms.`);
         return res.status(404).json({ message: "Room not found in fiveRooms" });
       }
     }
@@ -49,7 +49,7 @@ exports.createSuggestion = async (req, res) => {
       if (room) {
         twoGridRooms.push(room._id);
       } else {
-        console.log(`Room not found in fiveRooms.`);
+        //console.log(`Room not found in fiveRooms.`);
         return res.status(404).json({ message: "Room not found in fiveRooms" });
       }
     }
@@ -76,7 +76,7 @@ exports.createSuggestion = async (req, res) => {
     // mainImage
     const validMainRoom = await Room.findById(mainImage);
     if (!validMainRoom) {
-      console.log(`Room not found in mainRoom.`);
+      //console.log(`Room not found in mainRoom.`);
       return res.status(404).json({ message: "Room not found in mainRoom" });
     }
 
@@ -244,7 +244,7 @@ exports.fetchAllSuggestions = async (req, res) => {
       .exec();
 
     if (!suggestions) {
-      console.log(req.query);
+      //console.log(req.query);
       return res.status(404).json({ message: "No suggestions found" });
     }
 
@@ -289,7 +289,7 @@ exports.fetchSuggestionById = async (req, res) => {
   try {
     const suggestionId = req.query.id;
 
-    console.log(req.query);
+    //console.log(req.query);
     // Find the suggestion by its ID in the database
     const suggestion = await suggestionDB
       .findById(suggestionId)
@@ -300,7 +300,7 @@ exports.fetchSuggestionById = async (req, res) => {
       .populate("features")
       .populate("author");
     // Check if the suggestion exists
-    console.log(suggestion);
+    //console.log(suggestion);
     if (!suggestion) {
       // If suggestion is not found, return a 404 Not Found response
       return res.status(404).json({ message: "Suggestion not found" });

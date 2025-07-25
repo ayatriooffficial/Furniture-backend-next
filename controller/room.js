@@ -37,7 +37,7 @@ const product = await productsDB.findOne({ productId: cleanedProductId });
     if (!product) {
       return res.status(404).send("Product not found");
     }
-    console.log("Matched product:", product);
+    //console.log("Matched product:", product);
     const productCategory = product.category;
 
     const convertToSchemaType = (inputData) => {
@@ -76,10 +76,10 @@ const product = await productsDB.findOne({ productId: cleanedProductId });
       productCategory,
     });
     await newRoom.save();
-    console.log(newRoom);
+    //console.log(newRoom);
     res.status(201).json({ message: "New Room created successfully!...." });
   } catch (error) {
-    console.log(error.message);
+    //console.log(error.message);
     res
       .status(500)
       .json({ err: error.message || "Error while creating new Room!" });
@@ -139,7 +139,7 @@ exports.getTabsRoom = async (req, res) => {
           .sort({ popularity: -1 });
           
         if (product) {
-          console.log(product.productId);
+          //console.log(product.productId);
           const room = await Room.find({ productId: product.productId });
           if (room.length > 0) {
             rooms = [...rooms, ...room];
@@ -230,7 +230,7 @@ exports.getRoomsByCategoryAndType = async (req, res) => {
 exports.addSpecialRoomInCategory = async (req, res) => {
   try {
     const { roomId, categoryName } = req.body;
-    console.log(req.body);
+    //console.log(req.body);
 
     const category = await categoriesDB.findOne({ name: categoryName });
     if (!category) {
@@ -261,7 +261,7 @@ exports.getCategorySpecialRoom = async (req, res) => {
         name: categoryName,
       })
       .populate("specialRoom");
-    console.log(category);
+    //console.log(category);
     if (!category) {
       return res.status(404).send("Category not found");
     }
@@ -279,7 +279,7 @@ exports.getRoomIDByProductIDAndRoomType = async (req, res) => {
     const room = await Room.findOne({ productId, roomType });
     res.status(200).json(room?._id);
   } catch (error) {
-    console.log(error)
+    //console.log(error)
     res
       .status(500)
       .json({ err: error.message || "Error while fetching room!" });
@@ -303,7 +303,7 @@ exports.deleteRoomById = async (req, res) => {
     }
     res.status(200).json({ message: "Room deleted successfully", deletedRoom });
   } catch (error) {
-    console.log(error);
+    //console.log(error);
     res.status(500).json({ err: error.message || "Error while deleting room!" });
   }
 };

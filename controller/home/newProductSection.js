@@ -14,21 +14,21 @@ exports.createProductSection = async (req, res) => {
       if (roomData1) {
         rooms.push(roomData1._id);
       } else {
-        console.log(`Room 1 not found.`);
+        // console.log(`Room 1 not found.`);
         return res.status(404).json({ message: "Room 1 not found." });
       }
       const roomData2 = await Room.findById(room2);
       if (roomData2) {
         rooms.push(roomData2._id);
       } else {
-        console.log(`Room 2 not found.`);
+        // console.log(`Room 2 not found.`);
         return res.status(404).json({ message: "Room 2 not found." });
       }
       const roomData3 = await Room.findById(room3);
       if (roomData3) {
         rooms.push(roomData3._id);
       } else {
-        console.log(`Room 3 not found.`);
+        // console.log(`Room 3 not found.`);
         return res.status(404).json({ message: "Room 3 not found." });
       }
       if (room4) {
@@ -36,7 +36,7 @@ exports.createProductSection = async (req, res) => {
         if (roomData4) {
           rooms.push(roomData4._id);
         } else {
-          console.log(`Room 4 not found.`);
+          // console.log(`Room 4 not found.`);
           return res.status(404).json({ message: "Room 4 not found." });
         }
       }

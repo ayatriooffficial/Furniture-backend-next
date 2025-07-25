@@ -1020,7 +1020,7 @@ exports.unlikeProduct = async (req, res) => {
       .status(200)
       .json({ message: "Product unliked successfully", likes: product.likes });
   } catch (error) {
-    console.log(error.message);
+    // console.log(error.message);
     res.status(400).json({ message: error.message });
   }
 };
