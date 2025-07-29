@@ -30,26 +30,26 @@ exports.testIncrementPopularity = async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
-    
+
     //console.log("Found product:", product.productTitle);
     //console.log("Current popularity:", product.popularity);
     //console.log("Category:", product.category);
-    
+
     // Increment popularity
     await incrementPopularityUtil(title);
-    
+
     // Get the updated category
-    const category = await categoriesDB.findOne({ 
-      name: { $regex: new RegExp(product.category, "i") } 
+    const category = await categoriesDB.findOne({
+      name: { $regex: new RegExp(product.category, "i") }
     });
-    
+
     if (!category) {
       return res.status(404).json({ message: "Category not found" });
     }
-    
+
     //console.log("Updated category popularity:", category.popularity);
-    
-    res.json({ 
+
+    res.json({
       message: "Test successful",
       product: {
         title: product.productTitle,
@@ -63,9 +63,9 @@ exports.testIncrementPopularity = async (req, res) => {
     });
   } catch (error) {
     console.error("Test error:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Test failed",
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -125,47 +125,59 @@ exports.trendingProducts = async (req, res) => {
 //   }
 // };
 
+
+exports.homeTrendingCategoriesImgAndType = async (req, res) => {
+  try {
+    const categories = await categoriesDB.find({}, { image: 1, type: 1, name:1, _id: 0});
+    res.json(categories);
+  } catch (error) {
+    console.error("Error in homeTrendingCategoriesImgAndType:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 exports.trendingCategories = async (req, res) => {
   try {
     // //console.log("Fetching trending categories from database:", mongoose.connection.db.databaseName);
-    
+
     // First, let's check if we have any categories at all
     const allCategories = await categoriesDB.find();
     //console.log("Total categories in database:", allCategories.length);
-    
+
     if (allCategories.length === 0) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         message: "No categories found in database",
         details: "The categories collection is empty"
       });
     }
-    
+
     // Log the first category to see its structure
     //console.log("Sample category:", JSON.stringify(allCategories[0], null, 2));
-    
+
     // Check if any categories have popularity > 0
     const categoriesWithPopularity = allCategories.filter(cat => cat.popularity > 0);
     //console.log("Categories with popularity > 0:", categoriesWithPopularity.length);
-    
+
     // Get trending categories with detailed logging
     const trendingCategories = await categoriesDB
       .find()
       .sort({ popularity: -1 });
-    
+
     //console.log("Found trending categories:", trendingCategories.length);
-    
+
     if (trendingCategories.length === 0) {
       // If we have categories but none are trending, let's return all categories
       //console.log("No trending categories found, returning all categories");
       return res.json(allCategories);
     }
-    
+
     res.json(trendingCategories);
   } catch (error) {
     console.error("Error in trendingCategories:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Internal server error",
-      error: error.message 
+      error: error.message
     });
   }
 };
