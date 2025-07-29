@@ -181,6 +181,7 @@ router.patch(
 router.get("/citiesAndHobbies", controller.getCitiesAndHobbies);
 
 router.get("/trendingCategories", trendingController.trendingCategories);
+router.get("/homeTrendingCategoriesImgAndType", trendingController.homeTrendingCategoriesImgAndType);
 router.get("/popularSearchProducts", trendingController.popularSearchProducts);
 
 // // recommendation engine 🎨
