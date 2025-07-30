@@ -692,6 +692,116 @@ exports.addFaqToCategory = async (req, res) => {
     });
   }
 };
+
+
+exports.getCategoriesByTypeModified = async (req, res) => {
+  try {
+    const { type } = req.params;
+
+    // Using aggregation for optimized query
+    const categories = await categoriesDB.aggregate([
+      // Match categories with type (case-insensitive)
+      {
+        $match: {
+          type: { $regex: new RegExp(type, "i") }
+        }
+      },
+      // Project only the relevant fields: name, image, and subcategories
+      {
+        $project: {
+          name: 1,
+          image: 1,
+          subcategories: {
+            $filter: {
+              input: "$subcategories", // The subcategories array
+              as: "subcategory",
+              cond: { $eq: ["$$subcategory.showInSubCategory", true] } // Only include visible subcategories
+            }
+          }
+        }
+      },
+      // Sort subcategories by popularity (descending order)
+      {
+        $project: {
+          name: 1,
+          image: 1,
+          subcategories: {
+            $sortArray: {
+              input: "$subcategories",
+              sortBy: { popularity: -1 } // Sort subcategories by popularity
+            }
+          }
+        }
+      }
+    ]);
+
+    // If no categories are found
+    if (categories.length === 0) {
+      return res.status(404).json({ message: "Categories not found." });
+    }
+
+    // Respond with the filtered and sorted categories
+    res.status(200).json(categories);
+  } catch (error) {
+    res.status(500).json({ error: error.message || "Internal server error" });
+  }
+};
+
+
+
+exports.getCategoriesByTypeModified = async (req, res) => {
+  try {
+    const { type } = req.params;
+
+    // Using aggregation for optimized query
+    const categories = await categoriesDB.aggregate([
+      // Match categories with type (case-insensitive)
+      {
+        $match: {
+          type: { $regex: new RegExp(type, "i") }
+        }
+      },
+      // Project only the relevant fields: name (category) and name (subcategory)
+      {
+        $project: {
+          name: 1, // Category name
+          subcategories: {
+            $filter: {
+              input: "$subcategories", // The subcategories array
+              as: "subcategory",
+              cond: { $eq: ["$$subcategory.showInSubCategory", true] } // Only include visible subcategories
+            }
+          }
+        }
+      },
+      // Project only the name for subcategories
+      {
+        $project: {
+          name: 1, // Category name
+          subcategories: {
+            name: 1 // Only subcategory name
+          }
+        }
+      }
+    ]);
+
+    // If no categories are found
+    if (categories.length === 0) {
+      return res.status(404).json({ message: "Categories not found." });
+    }
+
+    // Respond with the filtered categories
+    res.status(200).json(categories);
+  } catch (error) {
+    res.status(500).json({ error: error.message || "Internal server error" });
+  }
+};
+
+
+
+
+
+
 exports.getCategoryByName = async (req, res) => {
   try {
     const { categoryName } = req.params;
@@ -956,6 +1066,89 @@ exports.updatePdescCategoryByName = async (req, res) => {
     res.status(500).json({ error: error.message || "Internal server error." });
   }
 };
+
+
+exports.getCategoriesByTypeOnlyNames = async (req, res) => {
+  try {
+    const { type } = req.params;
+
+    const categories = await categoriesDB.find({
+      type: { $regex: new RegExp(type, "i") },
+    });
+
+    if (!categories) {
+      return res.status(404).json({ message: "Categories not found." });
+    }
+
+    // Sort subcategories by popularity
+    categories.forEach((category) => {
+      category.subcategories.sort((a, b) => b.popularity - a.popularity);
+    });
+
+    // Filter and select only necessary fields
+    const filteredCategories = categories.map((category) => {
+      const subcategories = category.subcategories
+        .filter((subcategory) => subcategory.showInSubCategory === true)
+        .map((subcategory) => ({
+          name: subcategory.name,  // Only include the name field
+        }));
+
+      return {
+        name: category.name,  // Only include the name field of category
+        subcategories,        // Return filtered subcategories with names only
+      };
+    });
+
+    res.status(200).send(filteredCategories);
+  } catch (error) {
+    res.status(500).json({ error: error.message || "Internal server error" });
+  }
+};
+
+exports.getCategoriesByTypeWithLimitedData = async (req, res) => {
+  try {
+    const { type } = req.params;
+
+    // Fetch categories based on the 'type' parameter
+    const categories = await categoriesDB.find({
+      type: { $regex: new RegExp(type, "i") },
+    });
+
+    if (!categories || categories.length === 0) {
+      return res.status(404).json({ message: "Categories not found." });
+    }
+
+    // Sort subcategories by popularity
+    categories.forEach((category) => {
+      category.subcategories.sort((a, b) => b.popularity - a.popularity);
+    });
+
+    // Filter subcategories that are set to show in the subcategory
+    const filteredCategories = categories.map((category) => {
+      // Format the subcategories to include only name and img
+      const subcategories = category.subcategories
+        .filter((subcategory) => subcategory.showInSubCategory === true) // Only show the subcategories marked as "showInSubCategory"
+        .map((subcategory) => ({
+          name: subcategory.name, // Subcategory name
+          img: subcategory.img,   // Subcategory image URL
+        }));
+
+      // Return only the necessary fields for the category
+      return {
+        name: category.name,      // Category name
+        subcategories,            // Filtered subcategories with name and img
+      };
+    });
+
+    // Send the response with filtered categories
+    res.status(200).json(filteredCategories);
+  } catch (error) {
+    res.status(500).json({ error: error.message || "Internal server error" });
+  }
+};
+
+
+
 
 exports.getCategoriesByType = async (req, res) => {
   try {
