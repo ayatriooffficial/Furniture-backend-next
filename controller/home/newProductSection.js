@@ -106,6 +106,8 @@ exports.getNewProductSection = async (req, res) => {
 
 
 
+
+
 // POST: '/api/deletenewProductSection/:imgId'  - homepageRoutes.js
 exports.deletenewProductSection = async (req, res) => {
   const { imgId } = req.params;

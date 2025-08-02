@@ -109,6 +109,7 @@ router.get(
 
 router.get("/getCategoryByTypeModified/:type", controller.getCategoriesByTypeModified);
 router.get("/getCategoriesByTypeOnlyNames/:type", controller.getCategoriesByTypeOnlyNames);
+router.get("/getCategoryByName/:categoryName", controller.getCategoryByName);
 router.get("/getCategoriesByType/:type", controller.getCategoriesByType);
 router.get("/getCategoriesByTypeLimtedData/:type", controller.getCategoriesByTypeWithLimitedData);
 router.get("/getSubCategories/:categoryName", controller.getSubCategories);
