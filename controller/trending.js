@@ -128,7 +128,7 @@ exports.trendingProducts = async (req, res) => {
 
 exports.homeTrendingCategoriesImgAndType = async (req, res) => {
   try {
-    const categories = await categoriesDB.find({}, { image: 1, type: 1, name:1, _id: 0});
+    const categories = await categoriesDB.find({}, { image: 1, type: 1, name: 1, _id: 0 });
     res.json(categories);
   } catch (error) {
     console.error("Error in homeTrendingCategoriesImgAndType:", error);
@@ -181,6 +181,34 @@ exports.trendingCategories = async (req, res) => {
     });
   }
 };
+
+exports.trendingCategoriesNames = async (req, res) => {
+  try {
+    const categories = await categoriesDB
+      .find()
+      .select('_id name') // include both _id and name fields
+      .sort({ popularity: -1 }); // optional: sort by popularity
+
+    if (categories.length === 0) {
+      return res.status(404).json({
+        message: "No categories found in database",
+        details: "The categories collection is empty"
+      });
+    }
+
+    res.json(categories); // each object has _id and name only
+
+  } catch (error) {
+    console.error("Error in trendingCategories:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
+
+
 
 exports.popularSearchProducts = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
