@@ -40,7 +40,7 @@ router.get(
       //console.log("path");
       const redirectUrl = `${baseURL}/${path}?token=${token}`;
       res.redirect(redirectUrl);
-      await sendEmailToUser(email);
+      // await sendEmailToUser(email);   
     } catch (error) {
       console.error("Error processing Google OAuth callback:", error);
       res.status(500).json({ message: "Internal server error" });

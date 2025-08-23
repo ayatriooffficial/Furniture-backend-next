@@ -82,7 +82,7 @@ router
   )
   .get(
     "/getnewProductSection",
-    newProductSectionController.getNewProductSection
+    newProductSectionController.getNewProductSection     
   )
   .delete(
     "/deletenewProductSection/:imgId",
