@@ -40,7 +40,9 @@ router.get(
       //console.log("path");
       const redirectUrl = `${baseURL}/${path}?token=${token}`;
       res.redirect(redirectUrl);
-      // await sendEmailToUser(email);   
+    await sendEmailToUser(email); 
+
+ 
     } catch (error) {
       console.error("Error processing Google OAuth callback:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -202,7 +204,7 @@ router.post("/create-user", async (req, res) => {
 
     const user = new userDB({ displayName, email, phone });
     await user.save();
-    // await sendEmailToUser(email);
+    await sendEmailToUser(email);
     res.status(201).json({ message: "User created successfully", user });
   } catch (error) {
     console.error(error);

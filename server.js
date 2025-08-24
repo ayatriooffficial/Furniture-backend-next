@@ -99,39 +99,34 @@ const io = socket(server, {
 
 const roomToUsers = new Map();
 const userToRoom = new Map(); // Track user's current room
-const roomMetadata = new Map(); 
-
-
-setInterval(() => {
-  for (const [roomId, users] of roomToUsers.entries()) {
-    if (users.size === 0) {
-      roomToUsers.delete(roomId);
-      roomMetadata.delete(roomId);
-    }
-  }
-}, 60000); 
+const roomMetadata = new Map(); // Store room information
+const userInfo = new Map();
 
 io.on("connection", (socket) => {
- socket.on("join-room", ({ roomId }) => {
-    // Leave previous room if exists
+  socket.on("join-room", ({ roomId, userInfo: userData }) => {
+    // Store user name
+
+    console.log("THis is user data",userData);
+    if (userData && userData.displayName) {
+      userInfo.set(socket.id,userData.displayName);
+    }
+
     const previousRoom = userToRoom.get(socket.id);
     if (previousRoom) {
       socket.leave(previousRoom);
       roomToUsers.get(previousRoom)?.delete(socket.id);
     }
 
-    // Initialize room if doesn't exist
     if (!roomToUsers.has(roomId)) {
       roomToUsers.set(roomId, new Set());
       roomMetadata.set(roomId, { 
         createdAt: Date.now(), 
-        maxUsers: 10 // Add room limits
+        maxUsers: 10
       });
     }
 
     const room = roomToUsers.get(roomId);
     
-    // Check room capacity
     if (room.size >= roomMetadata.get(roomId).maxUsers) {
       socket.emit("room-full");
       return;
@@ -141,11 +136,17 @@ io.on("connection", (socket) => {
     userToRoom.set(socket.id, roomId);
     socket.join(roomId);
 
-    // Emit to room with user count
+    // Send user names along with user joined event
+    const usersWithNames = {};
+    Array.from(room).forEach(userId => {
+      usersWithNames[userId] = userInfo.get(userId) || `User ${userId.slice(-4)}`;
+    });
+
     io.to(roomId).emit("user-joined", {
       userId: socket.id,
       users: Array.from(room),
-      userCount: room.size
+      userCount: room.size,
+      userNames: usersWithNames
     });
   });
 
@@ -157,12 +158,12 @@ io.on("connection", (socket) => {
     socket.leave(roomId);
   });
 
-    socket.on("disconnect", () => {
+  socket.on("disconnect", () => {
     const roomId = userToRoom.get(socket.id);
     if (roomId && roomToUsers.has(roomId)) {
       roomToUsers.get(roomId).delete(socket.id);
       userToRoom.delete(socket.id);
-      
+        userInfo.delete(socket.id); // Clean up user name
       socket.to(roomId).emit("user-left", { 
         userId: socket.id,
         userCount: roomToUsers.get(roomId).size 
@@ -170,8 +171,7 @@ io.on("connection", (socket) => {
     }
   });
 
-
-    // Add rate limiting for signaling
+  // Rate limiting
   const signalRateLimit = new Map();
   
   const checkRateLimit = (eventType) => {
@@ -187,25 +187,22 @@ io.on("connection", (socket) => {
     limit.count++;
     signalRateLimit.set(key, limit);
     
-    return limit.count <= 50; // 50 signals per second max
+    return limit.count <= 50;
   };
 
-
-  // Rate-limited signaling
   socket.on("offer", ({ to, offer }) => {
     if (checkRateLimit("offer")) {
       io.to(to).emit("offer", { from: socket.id, offer });
     }
   });
 
-
-   socket.on("answer", ({ to, answer }) => {
+  socket.on("answer", ({ to, answer }) => {
     if (checkRateLimit("answer")) {
       io.to(to).emit("answer", { from: socket.id, answer });
     }
   });
 
-   socket.on("ice-candidate", ({ to, candidate }) => {
+  socket.on("ice-candidate", ({ to, candidate }) => {
     if (checkRateLimit("ice-candidate")) {
       io.to(to).emit("ice-candidate", { from: socket.id, candidate });
     }
