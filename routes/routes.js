@@ -1,8 +1,137 @@
 const router = require("express").Router();
 const mongoose = require("mongoose");
 
+const modelsToLoad = [
+  "admin",
+  "Author",
+  "bannerSection",
+  "Cart",
+  "Category",
+  "CategoryDescription",
+  "CityHobbie",
+  "DemandType",
+  "ExternalOffer",
+  "FreeSampleCart",
+  "HashtagPost",
+  "Header",
+  "imgchanger",
+  "ImgGrid",
+  "ImgSection",
+  "LiveRoomAdmin",
+  "mapmodel",
+  "MidSection",
+  "ModelCategory",
+  "newProductSection",
+  "Offers",
+  "Order",
+  "poster",
+  "Preferences",
+  "ProfileContent",
+  "Products",
+  "Purchase",
+  "RequestedProduct",
+  "review",
+  "room",
+  "RoomMain",
+  "roomType",
+  "ShippingRate",
+  "Slider",
+  "SpecialReview",
+  "staticSection",
+  "Store",
+  "Suggestions",
+  "Urgency",
+  "User",
+  "UserLocation",
+  "VEModel",
+];
+
+modelsToLoad.forEach((modelName) => {
+  try {
+    require(`../model/${modelName}`);
+    console.log(`✅ Loaded model: ${modelName}`);
+  } catch (err) {
+    console.error(` FAILED to load model ${modelName}:`, err.message);
+  }
+});
+
+// Log all registered models
+const registered = mongoose.modelNames();
+console.log("\n ALL REGISTERED MODELS IN MONGOOSE:");
+console.log(registered);
+console.log(
+  ` Total models registered: ${registered.length} / ${modelsToLoad.length}`
+);
+
+// Identify missing models
+const missing = modelsToLoad.filter((m) => !registered.includes(m));
+if (missing.length > 0) {
+  console.warn(" Missing models that failed to register:", missing);
+} else {
+  console.log("ALL MODELS SUCCESSFULLY REGISTERED!");
+}
+
+// Map mongoose model names to expected names
+const expectedModels = [
+  "users",
+  "admin",
+  "authors",
+  "bannerSectionImg",
+  "Cart",
+  "ProductCategories",
+  "CategoryDescription",
+  "DemandType",
+  "ExternalOffer",
+  "FreeSampleCart",
+  "HashtagPost",
+  "Header",
+  "ImgGrid",
+  "MidImages",
+  "LiveRoomAdmin",
+  "Map",
+  "Imagechanger",
+  "CategoryForModel",
+  "newProductSectionImg",
+  "Offers",
+  "order",
+  "posters",
+  "preferences",
+  "products",
+  "Purchase",
+  "RequestedProduct",
+  "Review",
+  "rooms",
+  "roomMain",
+  "roomType",
+  "Slider",
+  "Specialreview",
+  "StaticSection",
+  "Store",
+  "Suggestions",
+  "urgency",
+  "UserLocation",
+  "VirtualExperience",
+];
+
+const modelDiscrepancies = expectedModels.filter(
+  (m) => !registered.includes(m)
+);
+if (modelDiscrepancies.length > 0) {
+  console.warn(
+    `⚠️  Models in collection that weren't imported: ${modelDiscrepancies}`
+  );
+}
+
 // import middleware
 const { uploadImage } = require("../middleware/uploadImage");
+const verifyAdminToken = require("../middleware/verifyAdminToken");
+const migrateImages = require("../controller/migrateImages");
+const productAssetController = require("../controller/productAssetController");
+const genericAssetController = require("../controller/genericAssetController");
+const adminSchemaController = require("../controller/adminSchemaController");
+const documentSearchController = require("../controller/documentSearchController");
+const schemaFieldsController = require("../controller/schemaFieldsController");
+const cleanupController = require("../controller/cleanupController");
 // import controllers
 const controller = require("../controller/bin/controller");
 const cartController = require("../controller/cart");
@@ -39,6 +168,35 @@ router.post("/aimodelcategories", categoryController.createModelCategory);
 router.get(
   "/aimodelcategories/:categoryname/:roomName",
   categoryController.getCategoryImages
+);
+
+// Temporary upload endpoint: upload a single file to Cloudinary and return URL
+router.post(
+  "/upload",
+  /* verifyAdminToken, */
+  // accept multiple files under field name 'file' (up to 20)
+  uploadImage.array("file", 20),
+  (req, res) => {
+    try {
+      const files = req.files || (req.file ? [req.file] : []);
+      if (!files || files.length === 0)
+        return res.status(400).json({ error: "No files uploaded" });
+
+      // Map each multer file to a canonical URL
+      const urls = files
+        .map(
+          (file) =>
+            file.path || file.secure_url || file.location || file.url || null
+        )
+        .filter(Boolean);
+
+      console.log(`[upload] uploaded ${urls.length} file(s)`);
+      return res.json({ ok: true, urls, files });
+    } catch (err) {
+      console.error("/upload error", err);
+      return res.status(500).json({ error: err.message });
+    }
+  }
 );
 
 //product confirmation email
@@ -106,12 +264,20 @@ router.get(
   controller.getallProductsBySubCategory
 );
 
-
-router.get("/getCategoryByTypeModified/:type", controller.getCategoriesByTypeModified);
-router.get("/getCategoriesByTypeOnlyNames/:type", controller.getCategoriesByTypeOnlyNames);
+router.get(
+  "/getCategoryByTypeModified/:type",
+  controller.getCategoriesByTypeModified
+);
+router.get(
+  "/getCategoriesByTypeOnlyNames/:type",
+  controller.getCategoriesByTypeOnlyNames
+);
 router.get("/getCategoryByName/:categoryName", controller.getCategoryByName);
 router.get("/getCategoriesByType/:type", controller.getCategoriesByType);
-router.get("/getCategoriesByTypeLimtedData/:type", controller.getCategoriesByTypeWithLimitedData);
+router.get(
+  "/getCategoriesByTypeLimtedData/:type",
+  controller.getCategoriesByTypeWithLimitedData
+);
 router.get("/getSubCategories/:categoryName", controller.getSubCategories);
 router.get(
   "/getCategoryWithSubCategoryByName/:categoryName",
@@ -186,8 +352,14 @@ router.patch(
 router.get("/citiesAndHobbies", controller.getCitiesAndHobbies);
 
 router.get("/trendingCategories", trendingController.trendingCategories);
-router.get("/trendingCategoriesNames", trendingController.trendingCategoriesNames);
-router.get("/homeTrendingCategoriesImgAndType", trendingController.homeTrendingCategoriesImgAndType);
+router.get(
+  "/trendingCategoriesNames",
+  trendingController.trendingCategoriesNames
+);
+router.get(
+  "/homeTrendingCategoriesImgAndType",
+  trendingController.homeTrendingCategoriesImgAndType
+);
 router.get("/popularSearchProducts", trendingController.popularSearchProducts);
 
 // // recommendation engine 🎨
@@ -522,5 +694,189 @@ router.get(
 
 // Purchase
 router.post("/purchase", purchaseController.storePurchase);
+
+// Admin-only endpoint to migrate/replace image URLs across collections.
+router.post(
+  "/admin/migrate-images",
+  /* verifyAdminToken, */ migrateImages.migrate
+);
+
+// verifyAdminToken commented out - authentication disabled for image uploads
+router.post(
+  "/admin/doc/:model/:id/upload",
+  /* verifyAdminToken, */
+  uploadImage.array("file", 4),
+  genericAssetController.uploadForDoc
+);
+
+// verifyAdminToken commented out - authentication disabled for image uploads
+router.get(
+  "/admin/schema-image-fields",
+  /* verifyAdminToken, */
+  adminSchemaController.getImageFields
+);
+
+// Debug endpoint for inspecting image fields in a specific model
+router.get(
+  "/admin/debug/image-fields/:model",
+  /* verifyAdminToken, */
+  adminSchemaController.debugModelImageFields
+);
+
+// Search documents by name/title
+router.get(
+  "/admin/doc/:model/search",
+  /* verifyAdminToken, */
+  documentSearchController.searchDocuments
+);
+
+// Get single document by ID (for fetching full details after search)
+router.get(
+  "/admin/doc/:model/:id",
+  /* verifyAdminToken, */
+  documentSearchController.getDocumentById
+);
+
+// Get all searchable fields (for search dropdowns)
+router.get(
+  "/admin/schema-searchable-fields",
+  /* verifyAdminToken, */
+  schemaFieldsController.getSearchableFields
+);
+
+// Get all registered models (regardless of searchable fields)
+router.get(
+  "/admin/schema-all-models",
+  /* verifyAdminToken, */
+  (req, res) => {
+    const allModels = mongoose.modelNames().sort();
+    console.log(` Returning ${allModels.length} registered models`);
+    res.json({
+      ok: true,
+      models: allModels,
+      count: allModels.length,
+    });
+  }
+);
+
+// DEBUG: Get image fields for a specific model
+router.get(
+  "/admin/debug/image-fields/:model",
+  /* verifyAdminToken, */
+  (req, res) => {
+    const { model } = req.params;
+
+    if (!mongoose.modelNames().includes(model)) {
+      return res.status(400).json({
+        error: "Unknown model",
+        model,
+        available: mongoose.modelNames(),
+      });
+    }
+
+    try {
+      const Model = mongoose.model(model);
+      const tree = Model.schema.tree;
+      const imageFields = [];
+      const allKeys = Object.keys(tree);
+
+      for (const key of allKeys) {
+        const lname = key.toLowerCase();
+        if (lname.includes("image") || lname.includes("img")) {
+          imageFields.push({
+            key,
+            type: tree[key].type ? tree[key].type.name : typeof tree[key],
+            isArray: Array.isArray(tree[key].type),
+          });
+        }
+      }
+
+      return res.json({
+        ok: true,
+        model,
+        schema_keys: allKeys.slice(0, 20), 
+        total_schema_keys: allKeys.length,
+        image_fields: imageFields,
+        image_fields_count: imageFields.length,
+        full_tree_keys: allKeys,
+      });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// Cleanup old S3 URLs from specific document field
+router.post(
+  "/admin/cleanup-old-urls/:model/:id/:field",
+  /* verifyAdminToken, */
+  cleanupController.cleanupOldUrls
+);
+
+// Cleanup URLs matching pattern across all models
+router.post(
+  "/admin/cleanup-pattern",
+  /* verifyAdminToken, */
+  cleanupController.cleanupPattern
+);
+
+// DEBUG ENDPOINT: Show which models failed to load
+router.get("/admin/debug/model-status", (req, res) => {
+  const registered = mongoose.modelNames();
+  const modelsToLoad = [
+    "admin",
+    "Author",
+    "bannerSection",
+    "Cart",
+    "Category",
+    "CategoryDescription",
+    "CityHobbie",
+    "DemandType",
+    "ExternalOffer",
+    "FreeSampleCart",
+    "HashtagPost",
+    "Header",
+    "imgchanger",
+    "ImgGrid",
+    "ImgSection",
+    "LiveRoomAdmin",
+    "mapmodel",
+    "MidSection",
+    "ModelCategory",
+    "newProductSection",
+    "Offers",
+    "Order",
+    "poster",
+    "Preferences",
+    "ProfileContent",
+    "Products",
+    "Purchase",
+    "RequestedProduct",
+    "review",
+    "room",
+    "RoomMain",
+    "roomType",
+    "ShippingRate",
+    "Slider",
+    "SpecialReview",
+    "staticSection",
+    "Store",
+    "Suggestions",
+    "Urgency",
+    "User",
+    "UserLocation",
+    "VEModel",
+  ];
+
+  const missing = modelsToLoad.filter((m) => !registered.includes(m));
+
+  res.json({
+    total_expected: modelsToLoad.length,
+    total_registered: registered.length,
+    registered_models: registered.sort(),
+    missing_models: missing.sort(),
+    failed_to_load_count: missing.length,
+  });
+});
 
 module.exports = router;
