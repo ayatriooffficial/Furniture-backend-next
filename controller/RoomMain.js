@@ -2,28 +2,35 @@
 const Room = require("../model/room");
 const RoomMain = require("../model/RoomMain");
 const Product = require("../model/Products");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const cloudinary = require("cloudinary").v2;
 const UserDB = require("../model/User");
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require("uuid");
 // Update the create function to include FAQs and Features
 
-const s3 = new S3Client({
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-async function uploadToS3(buffer, fileName, mimeType = "image/jpeg") {
-  const command = new PutObjectCommand({
-    Bucket: process.env.AWS_S3_BUCKET_NAME,
-    Key: `features/${fileName}`,
-    Body: buffer,
-    ContentType: mimeType,
+async function uploadToCloudinary(buffer, fileName, mimeType = "image/jpeg") {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: "features",
+        resource_type: "auto",
+        public_id: fileName.split(".")[0],
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.secure_url);
+        }
+      }
+    );
+
+    uploadStream.end(buffer);
   });
-
-  await s3.send(command);
-
-  return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/features/${fileName}`;
 }
 exports.create = async (req, res) => {
   try {
@@ -32,7 +39,7 @@ exports.create = async (req, res) => {
     }
     //console.log("Request body:", req.body); // Debug log
 
-    const {
+    let {
       heading,
       summary,
       shortSummary,
@@ -58,8 +65,15 @@ exports.create = async (req, res) => {
       featureDescription,
       featureType,
       tip,
-      cards
+      cards,
     } = req.body;
+
+    // Parse features if it's a string
+    let parsedFeatures = features
+      ? typeof features === "string"
+        ? JSON.parse(features)
+        : features
+      : [];
 
     if (req.files && req.files.featuresIcons) {
       const iconsArray = Array.isArray(req.files.featuresIcons)
@@ -71,7 +85,7 @@ exports.create = async (req, res) => {
         if (iconFile && iconFile.buffer) {
           const ext = iconFile.originalname.split(".").pop();
           const fileName = `${uuidv4()}.${ext}`;
-          const imageUrl = await uploadToS3(
+          const imageUrl = await uploadToCloudinary(
             iconFile.buffer,
             fileName,
             iconFile.mimetype
@@ -89,7 +103,7 @@ exports.create = async (req, res) => {
         return res.status(404).json({ message: "Author not found" });
       }
     }
-    
+
     // Validate rooms and grids
     const fiveGridRooms = [];
     for (let data of fiveRooms) {
@@ -195,7 +209,7 @@ exports.create = async (req, res) => {
       summary,
       shortSummary,
       mainImage: validMainRoom._id,
-      tip:tip,
+      tip: tip,
       fiveGrid: mappedFiveGrid,
       twoGrid: mappedTwoGrid,
       sliders: {
@@ -233,7 +247,7 @@ exports.create = async (req, res) => {
       metadata: { title: metadataTitle },
       position,
       faqs: faqs || [], // Add FAQs
-      features: features || [], // Add Features
+      features: parsedFeatures, // Save features with Cloudinary URLs
       author: authorId || null,
     });
 

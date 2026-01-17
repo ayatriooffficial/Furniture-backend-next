@@ -1,39 +1,7 @@
 const multer = require("multer");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const cloudinary = require("cloudinary").v2;
-const path = require("path");
-
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-// Image Storage Configuration
-const imageStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "ayatrio/images",
-    resource_type: "auto",
-    quality: "auto",
-  },
-});
-
-// PDF Storage Configuration
-const pdfStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "ayatrio/pdfs",
-    resource_type: "raw",
-    type: "upload",
-  },
-});
-
-// AWS S3 Configuration - COMMENTED OUT (using Cloudinary instead)
-/*
 const multerS3 = require("multer-s3");
 const { S3Client } = require("@aws-sdk/client-s3");
+const path = require("path");
 const myBucket = process.env.AWS_BUCKET_NAME;
 
 const s3 = new S3Client({
@@ -44,7 +12,7 @@ const s3 = new S3Client({
   region: "ap-south-1",
 });
 
-const imageStorageS3 = multerS3({
+const imageStorage = multerS3({
   s3,
   bucket: myBucket,
   acl: "public-read",
@@ -56,11 +24,12 @@ const imageStorageS3 = multerS3({
       Date.now() + "_" + file.fieldname + "_" + file.originalname;
     cb(null, fileName);
   },
+  //changes made here
   contentType: multerS3.AUTO_CONTENT_TYPE,
   contentDisposition: "inline",
 });
 
-const pdfStorageS3 = multerS3({
+const pdfStorage = multerS3({
   s3,
   bucket: "ayatrio-images",
   acl: "public-read",
@@ -73,7 +42,6 @@ const pdfStorageS3 = multerS3({
     cb(null, fileName);
   },
 });
-*/
 
 function sanitizeFile(file, cb) {
   const imageExts = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"];

@@ -146,19 +146,14 @@ const productSchema = new mongoose.Schema({
   purchaseMode: [String],
   otherRoom: [String],
   productDescription: String,
-  coreValues: [
-    {
-      heading: String,
-      text: String,
-      image: { type: String, required: false },
-    },
-  ],
-  features: [
-    {
-      text: String,
-      image: { type: String, required: false },
-    },
-  ],
+  coreValueIds: {
+    type: [String],
+    default: [],
+  },
+  featureIds: {
+    type: [String],
+    default: [],
+  },
   pdf: { type: String },
 
   isFreeSampleAvailable: {

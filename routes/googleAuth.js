@@ -39,10 +39,13 @@ router.get(
       });
       //console.log("path");
       const redirectUrl = `${baseURL}/${path}?token=${token}`;
-      res.redirect(redirectUrl);
-    await sendEmailToUser(email); 
 
- 
+      // Send email in background without blocking the redirect
+      sendEmailToUser(email).catch((err) =>
+        console.error("Error sending email:", err)
+      );
+
+      res.redirect(redirectUrl);
     } catch (error) {
       console.error("Error processing Google OAuth callback:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -138,15 +141,12 @@ router.put(
 
       // Update the displayName if provided
       user.displayName = req.body.displayName || user.displayName;
-      
       // Update image if provided
       if (req.files && req.files.image) {
         user.image = req.files.image[0].location;
       }
-      
       // Update role
       user.role = req.body.role;
-      
       // Update authorDetails fields if they exist
       user.authorDetails = user.authorDetails || {};
       if (req.body.authorDetails) {
@@ -154,10 +154,8 @@ router.put(
         user.authorDetails.experience = req.body.authorDetails.experience;
         user.authorDetails.award = req.body.authorDetails.award;
       }
-      
       // Update links
       user.links = { ...req.body.links };
-      
       await user.save();
       //console.log({ user });
 
