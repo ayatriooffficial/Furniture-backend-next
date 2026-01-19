@@ -76,7 +76,7 @@ const pdfStorageS3 = multerS3({
 */
 
 function sanitizeFile(file, cb) {
-  const imageExts = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"];
+  const imageExts = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".avif"];
   const pdfExts = [".pdf"]; // Allowed PDF extension
 
   const allowedExts = [...imageExts, ...pdfExts];
@@ -89,7 +89,7 @@ function sanitizeFile(file, cb) {
     return cb(null, true); // no error
   } else {
     cb(
-      "Error: Invalid file type! Only images (.png, .jpg, .jpeg, .gif) or PDFs are allowed."
+      "Error: Invalid file type! Only images (.png, .jpg, .jpeg, .gif, .webp, .avif) or PDFs are allowed."
     );
   }
 }
