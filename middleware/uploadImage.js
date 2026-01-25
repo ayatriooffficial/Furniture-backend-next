@@ -110,7 +110,8 @@ const uploadPDF = multer({
     sanitizeFile(file, callback);
   },
   limits: {
-    fileSize: 1024 * 1024 * 10, // 10MB file size for PDFs
+    fileSize: 1024 * 1024 * 10, 
+    // 10MB file size for PDFs
   },
 });
 
