@@ -6,23 +6,8 @@ const roomsDB = require("../../model/room");
 const RoomMain = require("../../model/RoomMain");
 const Suggestion = require("../../model/Suggestions");
 // At the top of your controller file
-const axios = require('axios');
-const { v4: uuidv4 } = require('uuid');
-
-const {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} = require("@aws-sdk/client-s3");
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
-
+const axios = require("axios");
+const { v4: uuidv4 } = require("uuid");
 
 // GET: api/categories
 exports.getCategories = async (req, res) => {
@@ -55,7 +40,7 @@ function mapTextAndHyperlink(inputArray) {
     if (item.selectedtext && item.hyperlink) {
       const updatedText = item.text.replace(
         item.selectedtext,
-        `${item.selectedtext}|${item.hyperlink}`
+        `${item.selectedtext}|${item.hyperlink}`,
       );
       return updatedText;
     }
@@ -67,34 +52,18 @@ exports.createCategory = async (req, res) => {
   try {
     // 1. Extract and validate main image URL
     const { image } = req.body;
-    if (!image || typeof image !== 'string') {
+    if (!image || typeof image !== "string") {
       return res.status(400).json({ error: "Valid image URL is required" });
     }
 
-    // 2. Process SVG files for features
-    const processSVG = async (svgUrl, featureTitle) => {
+    // 2. Process SVG files for features - simply return the URL as-is
+    const processSVG = async (svgData, featureTitle) => {
       try {
-        const response = await axios.get(svgUrl, {
-          responseType: 'arraybuffer',
-          timeout: 10000
-        });
-
-        const sanitizedTitle = featureTitle
-          .replace(/[^a-zA-Z0-9]/g, '_')
-          .toLowerCase();
-        const fileName = `features/${sanitizedTitle}_${uuidv4()}.svg`;
-
-        await s3Client.send(new PutObjectCommand({
-          Bucket: process.env.S3_BUCKET_NAME,
-          Key: fileName,
-          Body: response.data,
-          ContentType: 'image/svg+xml',
-          ACL: 'public-read'
-        }));
-
-        return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+        // SVG data is already uploaded via the uploadImage middleware
+        // Just return the data as-is (either URL or will be handled by middleware)
+        return svgData || null;
       } catch (error) {
-        console.error(`SVG processing failed for ${featureTitle}:`, error);
+        console.error(`SVG processing error for ${featureTitle}:`, error);
         return null;
       }
     };
@@ -103,38 +72,39 @@ exports.createCategory = async (req, res) => {
     const handlePdesc = (input) => {
       try {
         // Handle FormData stringified JSON
-        if (typeof input === 'string') {
+        if (typeof input === "string") {
           try {
             const parsed = JSON.parse(input);
             return {
-              description: parsed?.description?.toString()?.substring(0, 2000) || ''
+              description:
+                parsed?.description?.toString()?.substring(0, 2000) || "",
             };
           } catch {
             return {
-              description: input.toString().substring(0, 2000)
+              description: input.toString().substring(0, 2000),
             };
           }
         }
         // Handle direct object input
         return {
-          description: input?.description?.toString()?.substring(0, 2000) || ''
+          description: input?.description?.toString()?.substring(0, 2000) || "",
         };
       } catch (error) {
-        return { description: '' };
+        return { description: "" };
       }
     };
 
     // 4. Extract and sanitize all fields
-    const sanitizeString = (value, maxLength = 100) => 
-      (value?.toString() || '').substring(0, maxLength).trim();
+    const sanitizeString = (value, maxLength = 100) =>
+      (value?.toString() || "").substring(0, maxLength).trim();
 
     const {
       name,
       type,
-      description = '',
-      h1title = '',
-      h1tag = '',
-      metadataTitle = '',
+      description = "",
+      h1title = "",
+      h1tag = "",
+      metadataTitle = "",
       showCalculator = false,
       features = [],
       subcategories = [],
@@ -145,7 +115,7 @@ exports.createCategory = async (req, res) => {
       availableServices = [],
       availableRatingTypes = [],
       firstGrid = {},
-      secondGrid = {}
+      secondGrid = {},
     } = req.body;
 
     // 5. Validate required fields with better error messages
@@ -153,72 +123,79 @@ exports.createCategory = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Validation Error",
-        details: "Both 'name' and 'type' fields are required and must be non-empty strings"
+        details:
+          "Both 'name' and 'type' fields are required and must be non-empty strings",
       });
     }
 
     // 6. Process features with error resilience
     const processedFeatures = await Promise.all(
-      (Array.isArray(features) ? features : []).map(async (feature) => {
-        try {
-          const baseFeature = {
-            title: sanitizeString(feature?.title, 100) || 'Untitled Feature',
-            description: (feature?.description || []).slice(0, 5),
-            displayType: ['cardSVG', 'card', 'Tip', 'Comparison'].includes(feature?.displayType)
-              ? feature.displayType
-              : 'Tip',
-            svg: null
-          };
+      (Array.isArray(features) ? features : [])
+        .map(async (feature) => {
+          try {
+            const baseFeature = {
+              title: sanitizeString(feature?.title, 100) || "Untitled Feature",
+              description: (feature?.description || []).slice(0, 5),
+              displayType: ["cardSVG", "card", "Tip", "Comparison"].includes(
+                feature?.displayType,
+              )
+                ? feature.displayType
+                : "Tip",
+              svg: null,
+            };
 
-          if (baseFeature.displayType === 'cardSVG' && feature?.svg) {
-            baseFeature.svg = await processSVG(
-              sanitizeString(feature.svg, 500),
-              baseFeature.title
-            );
+            if (baseFeature.displayType === "cardSVG" && feature?.svg) {
+              baseFeature.svg = await processSVG(
+                sanitizeString(feature.svg, 500),
+                baseFeature.title,
+              );
+            }
+            return baseFeature;
+          } catch (error) {
+            console.error("Error processing feature:", error);
+            return null;
           }
-          return baseFeature;
-        } catch (error) {
-          console.error("Error processing feature:", error);
-          return null;
-        }
-      }).filter(Boolean)
+        })
+        .filter(Boolean),
     );
 
     // 7. Process subcategories with safe defaults
-    const processedSubCategories = (Array.isArray(subcategories) ? subcategories : [])
+    const processedSubCategories = (
+      Array.isArray(subcategories) ? subcategories : []
+    )
       .slice(0, 20)
-      .map(sub => ({
-        name: sanitizeString(sub?.name, 50) || 'Unnamed Subcategory',
+      .map((sub) => ({
+        name: sanitizeString(sub?.name, 50) || "Unnamed Subcategory",
         description: sanitizeString(sub?.description, 500),
         metadata: {
-          title: sanitizeString(sub?.metadata?.title, 100)
+          title: sanitizeString(sub?.metadata?.title, 100),
         },
         img: sanitizeString(sub?.img, 500),
         isAccessories: !!sub?.isAccessories,
         showInSubCategory: sub?.showInSubCategory !== false,
         products: (Array.isArray(sub?.products) ? sub.products : [])
           .slice(0, 50)
-          .map(p => ({
-            productId: sanitizeString(p?.productId, 100)
+          .map((p) => ({
+            productId: sanitizeString(p?.productId, 100),
           })),
         features: (Array.isArray(sub?.features) ? sub.features : [])
           .slice(0, 20)
-          .map(f => ({
+          .map((f) => ({
             title: sanitizeString(f?.title, 100),
             description: sanitizeString(f?.description, 500),
-            displayType: ['cardSVG', 'card', 'Tip', 'Comparison'].includes(f?.displayType)
+            displayType: ["cardSVG", "card", "Tip", "Comparison"].includes(
+              f?.displayType,
+            )
               ? f.displayType
-              : 'Tip',
-            svg: sanitizeString(f?.svg, 500)
+              : "Tip",
+            svg: sanitizeString(f?.svg, 500),
           })),
-        faq: (Array.isArray(sub?.faq) ? sub.faq : [])
-          .slice(0, 20)
-          .map(f => ({
-            heading: sanitizeString(f?.heading, 200),
-            description: sanitizeString(f?.description, 1000)
-          })),
+        faq: (Array.isArray(sub?.faq) ? sub.faq : []).slice(0, 20).map((f) => ({
+          heading: sanitizeString(f?.heading, 200),
+          description: sanitizeString(f?.description, 1000),
+        })),
         h1title: sanitizeString(sub?.h1title, 100),
-        pdesc: handlePdesc(sub?.pdesc)
+        pdesc: handlePdesc(sub?.pdesc),
       }));
 
     // 8. Build final category object with safety checks
@@ -231,60 +208,72 @@ exports.createCategory = async (req, res) => {
       description: sanitizeString(description, 2000),
       h1title: sanitizeString(h1title, 100),
       metadata: {
-        title: sanitizeString(metadataTitle, 100)
+        title: sanitizeString(metadataTitle, 100),
       },
       showCalculator: !!showCalculator,
       features: processedFeatures.filter(Boolean),
       pdesc: handlePdesc(req.body.pdesc),
-      maintenanceDetails: (Array.isArray(maintenanceDetails) ? maintenanceDetails : [])
+      maintenanceDetails: (Array.isArray(maintenanceDetails)
+        ? maintenanceDetails
+        : []
+      )
         .slice(0, 20)
-        .map(md => ({
+        .map((md) => ({
           heading: sanitizeString(md?.heading, 200),
-          description: sanitizeString(md?.description, 1000)
+          description: sanitizeString(md?.description, 1000),
         })),
-      installationDetails: (Array.isArray(installationDetails) ? installationDetails : [])
+      installationDetails: (Array.isArray(installationDetails)
+        ? installationDetails
+        : []
+      )
         .slice(0, 20)
-        .map(id => ({
+        .map((id) => ({
           heading: sanitizeString(id?.heading, 200),
-          description: sanitizeString(id?.description, 1000)
+          description: sanitizeString(id?.description, 1000),
         })),
-      faq: (Array.isArray(faq) ? faq : [])
-        .slice(0, 20)
-        .map(f => ({
-          heading: sanitizeString(f?.heading, 200),
-          description: sanitizeString(f?.description, 1000)
-        })),
+      faq: (Array.isArray(faq) ? faq : []).slice(0, 20).map((f) => ({
+        heading: sanitizeString(f?.heading, 200),
+        description: sanitizeString(f?.description, 1000),
+      })),
       availableColors: (Array.isArray(availableColors) ? availableColors : [])
         .slice(0, 50)
-        .map(c => ({
+        .map((c) => ({
           name: sanitizeString(c?.name, 50),
-          hexCode: (c?.hexCode?.match(/^#[0-9A-Fa-f]{6}/)?.[0] || '#000000').substring(0, 7)
+          hexCode: (
+            c?.hexCode?.match(/^#[0-9A-Fa-f]{6}/)?.[0] || "#000000"
+          ).substring(0, 7),
         })),
-      availableServices: (Array.isArray(availableServices) ? availableServices : [])
+      availableServices: (Array.isArray(availableServices)
+        ? availableServices
+        : []
+      )
         .slice(0, 50)
-        .map(s => ({
+        .map((s) => ({
           name: sanitizeString(s?.name, 50),
           cost: Math.min(Number(s?.cost) || 0, 1000000),
-          unitType: sanitizeString(s?.unitType, 20)
+          unitType: sanitizeString(s?.unitType, 20),
         })),
-      availableRatingTypes: (Array.isArray(availableRatingTypes) ? availableRatingTypes : [])
+      availableRatingTypes: (Array.isArray(availableRatingTypes)
+        ? availableRatingTypes
+        : []
+      )
         .slice(0, 50)
-        .map(rt => ({
+        .map((rt) => ({
           name: sanitizeString(rt?.name, 50),
-          image: sanitizeString(rt?.image, 500)
+          image: sanitizeString(rt?.image, 500),
         })),
       firstGrid: {
         title: sanitizeString(firstGrid?.title, 100),
         description: sanitizeString(firstGrid?.description, 500),
         link: sanitizeString(firstGrid?.link, 500),
-        image: sanitizeString(firstGrid?.image, 500)
+        image: sanitizeString(firstGrid?.image, 500),
       },
       secondGrid: {
         title: sanitizeString(secondGrid?.title, 100),
         description: sanitizeString(secondGrid?.description, 500),
         link: sanitizeString(secondGrid?.link, 500),
-        image: sanitizeString(secondGrid?.image, 500)
-      }
+        image: sanitizeString(secondGrid?.image, 500),
+      },
     });
 
     // 9. Save to database with error handling
@@ -295,17 +284,16 @@ exports.createCategory = async (req, res) => {
       success: true,
       message: "Category created successfully",
       categoryId: newCategory._id,
-      name: newCategory.name
+      name: newCategory.name,
     });
-
   } catch (error) {
     console.error("Category creation error:", error);
-    const statusCode = error.name === 'ValidationError' ? 400 : 500;
+    const statusCode = error.name === "ValidationError" ? 400 : 500;
     res.status(statusCode).json({
       success: false,
       error: statusCode === 400 ? "Validation Error" : "Internal Server Error",
       details: error.message,
-      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+      ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
     });
   }
 };
@@ -337,7 +325,7 @@ exports.updatePdescCategoryById = async (req, res) => {
         if (item.selectedText && item.hyperlink) {
           const updatedText = item.text.replace(
             item.selectedText,
-            `${item.selectedText}|${item.hyperlink}`
+            `${item.selectedText}|${item.hyperlink}`,
           );
           return updatedText;
         }
@@ -377,12 +365,14 @@ exports.addCategoryFeatures = async (req, res) => {
     // //console.log(req.body);
 
     if (!categoryId || !feature) {
-      return res.status(400).json({ 
-        error: "Category ID and feature are required." 
+      return res.status(400).json({
+        error: "Category ID and feature are required.",
       });
     }
 
-    if (!["cardSVG", "card", "Tip", "Comparison"].includes(feature.displayType)) {
+    if (
+      !["cardSVG", "card", "Tip", "Comparison"].includes(feature.displayType)
+    ) {
       return res.status(400).json({ error: "Invalid displayType" });
     }
 
@@ -390,43 +380,18 @@ exports.addCategoryFeatures = async (req, res) => {
 
     if (newFeature.displayType === "cardSVG") {
       if (!feature.svg) {
-        return res.status(400).json({ error: "svgUrl required for cardSVG type" });
+        return res
+          .status(400)
+          .json({ error: "svgUrl required for cardSVG type" });
       }
-
-      try {
-        // Download SVG from URL
-        const response = await axios({
-          method: "get",
-          url: feature.svg,
-          responseType: "arraybuffer",
-          timeout: 10000
-        });
-
-        // Generate S3 file name
-        const sanitizedTitle = feature.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        const fileName = `features/${sanitizedTitle}_${uuidv4()}.svg`;
-
-        // Upload to S3
-        await s3Client.send(new PutObjectCommand({
-          Bucket: process.env.S3_BUCKET_NAME,
-          Key: fileName,
-          Body: Buffer.from(response.data),
-          ContentType: 'image/svg+xml',
-          ACL: "public-read",
-        }));
-
-        newFeature.svg = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
-      } catch (error) {
-        console.error("SVG processing failed:", error);
-        return res.status(422).json({ 
-          error: `Failed to process SVG: ${error.message}`,
-          ...(error.response && { details: error.response.data })
-        });
-      }
+      // SVG is already in the correct format (URL from upload or base64)
+      // Just keep it as-is
+      newFeature.svg = feature.svg;
     }
 
     const category = await categoriesDB.findById(categoryId);
-    if (!category) return res.status(404).json({ error: "Category not found." });
+    if (!category)
+      return res.status(404).json({ error: "Category not found." });
     // //console.log(newFeature);
     category.features.push(newFeature);
     const savedCategory = await category.save();
@@ -437,9 +402,9 @@ exports.addCategoryFeatures = async (req, res) => {
     });
   } catch (error) {
     console.error("Error adding features:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: error.message || "Internal server error",
-      ...(error.response && { details: error.response.data })
+      ...(error.response && { details: error.response.data }),
     });
   }
 };
@@ -469,7 +434,7 @@ exports.deleteCategoryFeatures = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
     const featureIndex = category.features.findIndex(
-      (feature) => feature._id.toString() === featureId.toString()
+      (feature) => feature._id.toString() === featureId.toString(),
     );
     if (featureIndex === -1) {
       return res.status(404).json({ message: "Feature not found" });
@@ -514,7 +479,7 @@ exports.deleteFaq = async (req, res) => {
     }
 
     const faqIndex = category.faq.findIndex(
-      (faq) => faq._id.toString() === faqId
+      (faq) => faq._id.toString() === faqId,
     );
     if (faqIndex === -1) {
       //console.log("FAQ not found in category");
@@ -551,7 +516,7 @@ exports.deleteSubCategoryFaq = async (req, res) => {
     }
 
     const faqIndex = subCategory.faq.findIndex(
-      (faq) => faq._id.toString() === faqId
+      (faq) => faq._id.toString() === faqId,
     );
     if (faqIndex === -1) {
       //console.log("FAQ not found in category");
@@ -585,7 +550,7 @@ exports.deleteSubCategoryFeature = async (req, res) => {
     }
 
     const featureIndex = subCategory.features.findIndex(
-      (feature) => feature._id.toString() === featureId
+      (feature) => feature._id.toString() === featureId,
     );
     if (featureIndex === -1) {
       //console.log("Feature not found in category");
@@ -621,7 +586,7 @@ exports.deleteSubCategoryProduct = async (req, res) => {
     }
 
     const productIndex = subCategory.products.findIndex(
-      (product) => product._id.toString() === productId
+      (product) => product._id.toString() === productId,
     );
     if (productIndex === -1) {
       //console.log("product not found in category");
@@ -648,22 +613,22 @@ exports.addFaqToCategory = async (req, res) => {
     const { heading, description, linkText } = req.body; // Fixed: changed linkTexT to linkText
 
     if (!categoryId || !heading) {
-      return res.status(400).json({ 
-        error: "Category ID and heading are required." 
+      return res.status(400).json({
+        error: "Category ID and heading are required.",
       });
     }
 
     const newFaq = {
       heading,
       description: description || "",
-      linkText: Array.isArray(linkText) ? linkText : [] 
+      linkText: Array.isArray(linkText) ? linkText : [],
     };
 
     if (newFaq.linkText.length > 0) {
       for (const link of newFaq.linkText) {
         if (!link.text || !link.link) {
           return res.status(400).json({
-            error: "Both text and link are required for linkText items"
+            error: "Both text and link are required for linkText items",
           });
         }
       }
@@ -681,18 +646,16 @@ exports.addFaqToCategory = async (req, res) => {
     res.status(200).json({
       message: "FAQ added successfully",
       data: { faq: newFaq },
-      success: true
+      success: true,
     });
-
   } catch (error) {
     console.error("Error adding FAQ:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: error.message || "Internal server error",
-      success: false 
+      success: false,
     });
   }
 };
-
 
 exports.getCategoriesByTypeModified = async (req, res) => {
   try {
@@ -703,8 +666,8 @@ exports.getCategoriesByTypeModified = async (req, res) => {
       // Match categories with type (case-insensitive)
       {
         $match: {
-          type: { $regex: new RegExp(type, "i") }
-        }
+          type: { $regex: new RegExp(type, "i") },
+        },
       },
       // Project only the relevant fields: name, image, and subcategories
       {
@@ -715,10 +678,10 @@ exports.getCategoriesByTypeModified = async (req, res) => {
             $filter: {
               input: "$subcategories", // The subcategories array
               as: "subcategory",
-              cond: { $eq: ["$$subcategory.showInSubCategory", true] } // Only include visible subcategories
-            }
-          }
-        }
+              cond: { $eq: ["$$subcategory.showInSubCategory", true] }, // Only include visible subcategories
+            },
+          },
+        },
       },
       // Sort subcategories by popularity (descending order)
       {
@@ -728,11 +691,11 @@ exports.getCategoriesByTypeModified = async (req, res) => {
           subcategories: {
             $sortArray: {
               input: "$subcategories",
-              sortBy: { popularity: -1 } // Sort subcategories by popularity
-            }
-          }
-        }
-      }
+              sortBy: { popularity: -1 }, // Sort subcategories by popularity
+            },
+          },
+        },
+      },
     ]);
 
     // If no categories are found
@@ -747,8 +710,6 @@ exports.getCategoriesByTypeModified = async (req, res) => {
   }
 };
 
-
-
 exports.getCategoriesByTypeModified = async (req, res) => {
   try {
     const { type } = req.params;
@@ -758,8 +719,8 @@ exports.getCategoriesByTypeModified = async (req, res) => {
       // Match categories with type (case-insensitive)
       {
         $match: {
-          type: { $regex: new RegExp(type, "i") }
-        }
+          type: { $regex: new RegExp(type, "i") },
+        },
       },
       // Project only the relevant fields: name (category) and name (subcategory)
       {
@@ -769,20 +730,20 @@ exports.getCategoriesByTypeModified = async (req, res) => {
             $filter: {
               input: "$subcategories", // The subcategories array
               as: "subcategory",
-              cond: { $eq: ["$$subcategory.showInSubCategory", true] } // Only include visible subcategories
-            }
-          }
-        }
+              cond: { $eq: ["$$subcategory.showInSubCategory", true] }, // Only include visible subcategories
+            },
+          },
+        },
       },
       // Project only the name for subcategories
       {
         $project: {
           name: 1, // Category name
           subcategories: {
-            name: 1 // Only subcategory name
-          }
-        }
-      }
+            name: 1, // Only subcategory name
+          },
+        },
+      },
     ]);
 
     // If no categories are found
@@ -796,11 +757,6 @@ exports.getCategoriesByTypeModified = async (req, res) => {
     res.status(500).json({ error: error.message || "Internal server error" });
   }
 };
-
-
-
-
-
 
 exports.getCategoryByName = async (req, res) => {
   try {
@@ -817,7 +773,7 @@ exports.getCategoryByName = async (req, res) => {
     const filteredCategories = {
       ...category._doc,
       subcategories: category.subcategories.filter(
-        (subcategory) => subcategory.showInSubCategory === true
+        (subcategory) => subcategory.showInSubCategory === true,
       ),
     };
 
@@ -858,7 +814,7 @@ exports.updateCategoryMetadata = async (req, res) => {
     const category = await categoriesDB.findOneAndUpdate(
       { name: { $regex: new RegExp(categoryName, "i") } },
       { metadata: { title: metadataTitle }, h1tag: h1Tag },
-      { new: true }
+      { new: true },
     );
 
     if (!category) {
@@ -883,7 +839,7 @@ exports.updateCategoryh1title = async (req, res) => {
     const category = await categoriesDB.findOneAndUpdate(
       { name: { $regex: new RegExp(categoryName, "i") } },
       { h1title },
-      { new: true }
+      { new: true },
     );
 
     if (!category) {
@@ -926,7 +882,7 @@ exports.updateSubCategoryField = async (req, res) => {
 
     // Find the specific subcategory
     const subCategory = category.subcategories?.find(
-      (item) => item._id.toString() === subCategoryId
+      (item) => item._id.toString() === subCategoryId,
     );
 
     if (!subCategory) {
@@ -968,7 +924,7 @@ exports.updateSubCategoryh1title = async (req, res) => {
     }
 
     const subCategory = category.subcategories?.find(
-      (item) => item._id.toString() === subCategoryId
+      (item) => item._id.toString() === subCategoryId,
     );
 
     if (!subCategory) {
@@ -1010,7 +966,7 @@ exports.updateSubCategorypdesc = async (req, res) => {
 
     // Find and update the subcategory
     const subCategory = category.subcategories?.find(
-      (item) => item._id.toString() === subCategoryId
+      (item) => item._id.toString() === subCategoryId,
     );
 
     if (!subCategory) {
@@ -1050,7 +1006,7 @@ exports.updatePdescCategoryByName = async (req, res) => {
     const updatedCategory = await categoriesDB.findOneAndUpdate(
       { name: { $regex: new RegExp(categoryName, "i") } },
       { pdesc: pdescInfo },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedCategory) {
@@ -1066,7 +1022,6 @@ exports.updatePdescCategoryByName = async (req, res) => {
     res.status(500).json({ error: error.message || "Internal server error." });
   }
 };
-
 
 exports.getCategoriesByTypeOnlyNames = async (req, res) => {
   try {
@@ -1090,12 +1045,12 @@ exports.getCategoriesByTypeOnlyNames = async (req, res) => {
       const subcategories = category.subcategories
         .filter((subcategory) => subcategory.showInSubCategory === true)
         .map((subcategory) => ({
-          name: subcategory.name,  // Only include the name field
+          name: subcategory.name, // Only include the name field
         }));
 
       return {
-        name: category.name,  // Only include the name field of category
-        subcategories,        // Return filtered subcategories with names only
+        name: category.name, // Only include the name field of category
+        subcategories, // Return filtered subcategories with names only
       };
     });
 
@@ -1130,13 +1085,13 @@ exports.getCategoriesByTypeWithLimitedData = async (req, res) => {
         .filter((subcategory) => subcategory.showInSubCategory === true) // Only show the subcategories marked as "showInSubCategory"
         .map((subcategory) => ({
           name: subcategory.name, // Subcategory name
-          img: subcategory.img,   // Subcategory image URL
+          img: subcategory.img, // Subcategory image URL
         }));
 
       // Return only the necessary fields for the category
       return {
-        name: category.name,      // Category name
-        subcategories,            // Filtered subcategories with name and img
+        name: category.name, // Category name
+        subcategories, // Filtered subcategories with name and img
       };
     });
 
@@ -1146,9 +1101,6 @@ exports.getCategoriesByTypeWithLimitedData = async (req, res) => {
     res.status(500).json({ error: error.message || "Internal server error" });
   }
 };
-
-
-
 
 exports.getCategoriesByType = async (req, res) => {
   try {
@@ -1172,7 +1124,7 @@ exports.getCategoriesByType = async (req, res) => {
 
     const filteredCategories = categories.map((category) => {
       const subcategories = category.subcategories.filter(
-        (subcategory) => subcategory.showInSubCategory === true
+        (subcategory) => subcategory.showInSubCategory === true,
       );
       category.subcategories = subcategories;
       return category;
@@ -1199,7 +1151,7 @@ exports.getSubCategories = async (req, res) => {
     //Filter subcategories that are set to show in subcategory
 
     const subcategories = category.subcategories.filter(
-      (subcategory) => subcategory.showInSubCategory === true
+      (subcategory) => subcategory.showInSubCategory === true,
     );
 
     res.status(200).send(subcategories);
@@ -1342,55 +1294,63 @@ exports.addsubCategoryFeatures = async (req, res) => {
       });
     }
 
-    const processedFeatures = await Promise.all(features.map(async (feature) => {
-      const newFeature = {
-        title: feature.title,
-        description: feature.description,
-        displayType: feature.displayType || "Tip"
-      };
+    const processedFeatures = await Promise.all(
+      features.map(async (feature) => {
+        const newFeature = {
+          title: feature.title,
+          description: feature.description,
+          displayType: feature.displayType || "Tip",
+        };
 
-      if (newFeature.displayType === "cardSVG") {
-        if (!feature.svgUrl) {
-          throw new Error("SVG URL required for cardSVG features");
+        if (newFeature.displayType === "cardSVG") {
+          if (!feature.svgUrl) {
+            throw new Error("SVG URL required for cardSVG features");
+          }
+
+          try {
+            // Process SVG using Cloudinary
+            if (
+              typeof feature.svgUrl === "string" &&
+              feature.svgUrl.startsWith("data:")
+            ) {
+              // Base64 encoded SVG - upload to Cloudinary
+              const uploadResult = await cloudinary.uploader.upload(
+                feature.svgUrl,
+                {
+                  folder: "ayatrio/features",
+                  resource_type: "auto",
+                  public_id: `${feature.title.replace(/[^a-zA-Z0-9]/g, "_")}_${uuidv4()}`,
+                },
+              );
+              newFeature.svg = uploadResult.secure_url;
+            } else if (
+              typeof feature.svgUrl === "string" &&
+              (feature.svgUrl.startsWith("http://") ||
+                feature.svgUrl.startsWith("https://"))
+            ) {
+              // URL-based SVG - keep as-is
+              newFeature.svg = feature.svgUrl;
+            }
+          } catch (error) {
+            console.error(
+              `Failed to process SVG for feature: ${feature.title}`,
+              error,
+            );
+            throw new Error(`SVG processing failed: ${error.message}`);
+          }
         }
 
-        try {
-          // Download SVG from URL
-          const response = await axios({
-            method: "get",
-            url: feature.svgUrl,
-            responseType: "arraybuffer",
-            timeout: 10000
-          });
-
-          // Generate S3 file name
-          const sanitizedTitle = feature.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-          const fileName = `features/${sanitizedTitle}_${uuidv4()}.svg`;
-
-          // Upload to S3
-          await s3Client.send(new PutObjectCommand({
-            Bucket: process.env.S3_BUCKET_NAME,
-            Key: fileName,
-            Body: Buffer.from(response.data),
-            ContentType: 'image/svg+xml',
-            ACL: "public-read",
-          }));
-
-          newFeature.svg = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
-        } catch (error) {
-          console.error(`Failed to process SVG for feature: ${feature.title}`, error);
-          throw new Error(`SVG processing failed: ${error.message}`);
-        }
-      }
-
-      return newFeature;
-    }));
+        return newFeature;
+      }),
+    );
 
     const category = await categoriesDB.findById(categoryId);
-    if (!category) return res.status(404).json({ message: "Category not found" });
+    if (!category)
+      return res.status(404).json({ message: "Category not found" });
 
     const subCategory = category.subcategories.id(subCategoryId);
-    if (!subCategory) return res.status(404).json({ message: "Subcategory not found" });
+    if (!subCategory)
+      return res.status(404).json({ message: "Subcategory not found" });
 
     subCategory.features.push(...processedFeatures);
     await category.save();
@@ -1402,9 +1362,9 @@ exports.addsubCategoryFeatures = async (req, res) => {
   } catch (error) {
     console.error(error);
     const statusCode = error.message.includes("SVG processing") ? 422 : 500;
-    res.status(statusCode).json({ 
+    res.status(statusCode).json({
       error: error.message || "Internal server error",
-      ...(error.response && { details: error.response.data })
+      ...(error.response && { details: error.response.data }),
     });
   }
 };
@@ -1435,7 +1395,7 @@ exports.deletesubCategoryFeatures = async (req, res) => {
 
     // Find the feature index
     const featureIndex = subCategory.features.findIndex(
-      (feature) => feature._id.toString() === featureId.toString()
+      (feature) => feature._id.toString() === featureId.toString(),
     );
 
     // If feature not found
@@ -1471,7 +1431,7 @@ exports.getSubCategoryDetailByCategoryAndSubCategoryName = async (req, res) => {
     }
 
     const subCategory = category.subcategories.find(
-      (subCategory) => subCategory.name === subCategoryName
+      (subCategory) => subCategory.name === subCategoryName,
     );
 
     if (!subCategory) {
@@ -1493,7 +1453,7 @@ exports.getallProductsBySubCategory = async (req, res) => {
 
     // Filter products by subcategory
     const filteredProducts = products.filter((product) =>
-      product.subcategory.includes(subCategoryName)
+      product.subcategory.includes(subCategoryName),
     );
 
     res.json(filteredProducts);
@@ -1520,7 +1480,7 @@ exports.updateCategoryFirstGrid = async (req, res) => {
     const category = await categoriesDB.findByIdAndUpdate(
       categoryId,
       { firstGrid: mappedFirstGrid },
-      { new: true }
+      { new: true },
     );
     if (!category) {
       return res.status(404).json({ message: "Category not found." });
@@ -1552,7 +1512,7 @@ exports.updateCategorySecondGrid = async (req, res) => {
     const category = await categoriesDB.findByIdAndUpdate(
       categoryId,
       { secondGrid: mappedSecondGrid },
-      { new: true }
+      { new: true },
     );
     if (!category) {
       return res.status(404).json({ message: "Category not found." });
@@ -1574,7 +1534,7 @@ exports.deleteCategoryFirstGrid = async (req, res) => {
     const category = await categoriesDB.findByIdAndUpdate(
       categoryId,
       { firstGrid: null },
-      { new: true }
+      { new: true },
     );
     if (!category) {
       return res.status(404).json({ message: "Category not found." });
@@ -1593,7 +1553,7 @@ exports.deleteCategorySecondGrid = async (req, res) => {
     const category = await categoriesDB.findByIdAndUpdate(
       categoryId,
       { secondGrid: null },
-      { new: true }
+      { new: true },
     );
     if (!category) {
       return res.status(404).json({ message: "Category not found." });

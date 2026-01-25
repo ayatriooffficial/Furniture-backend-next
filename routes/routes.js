@@ -60,7 +60,7 @@ const registered = mongoose.modelNames();
 console.log("\n ALL REGISTERED MODELS IN MONGOOSE:");
 console.log(registered);
 console.log(
-  ` Total models registered: ${registered.length} / ${modelsToLoad.length}`
+  ` Total models registered: ${registered.length} / ${modelsToLoad.length}`,
 );
 
 // Identify missing models
@@ -114,23 +114,18 @@ const expectedModels = [
 ];
 
 const modelDiscrepancies = expectedModels.filter(
-  (m) => !registered.includes(m)
+  (m) => !registered.includes(m),
 );
 if (modelDiscrepancies.length > 0) {
   console.warn(
-    `⚠️  Models in collection that weren't imported: ${modelDiscrepancies}`
+    `⚠️  Models in collection that weren't imported: ${modelDiscrepancies}`,
   );
 }
 
 // import middleware
 const { uploadImage } = require("../middleware/uploadImage");
 const verifyAdminToken = require("../middleware/verifyAdminToken");
-const migrateImages = require("../controller/migrateImages");
 const productAssetController = require("../controller/productAssetController");
-const genericAssetController = require("../controller/genericAssetController");
-const adminSchemaController = require("../controller/adminSchemaController");
-const documentSearchController = require("../controller/documentSearchController");
-const schemaFieldsController = require("../controller/schemaFieldsController");
 const cleanupController = require("../controller/cleanupController");
 // import controllers
 const controller = require("../controller/bin/controller");
@@ -167,7 +162,7 @@ router.post("/aimodelcategories", categoryController.createModelCategory);
 // Route to get images for a specific category and room
 router.get(
   "/aimodelcategories/:categoryname/:roomName",
-  categoryController.getCategoryImages
+  categoryController.getCategoryImages,
 );
 
 // Temporary upload endpoint: upload a single file to Cloudinary and return URL
@@ -186,7 +181,7 @@ router.post(
       const urls = files
         .map(
           (file) =>
-            file.path || file.secure_url || file.location || file.url || null
+            file.path || file.secure_url || file.location || file.url || null,
         )
         .filter(Boolean);
 
@@ -196,7 +191,7 @@ router.post(
       console.error("/upload error", err);
       return res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 //product confirmation email
@@ -214,7 +209,7 @@ router.post(
     { name: "firstImage", maxCount: 1 },
     { name: "secondImage", maxCount: 1 },
   ]),
-  controller.createCategory
+  controller.createCategory,
 );
 
 //features for category and subcategory
@@ -246,71 +241,71 @@ router.post("/addCategoryFeatures/:categoryId", controller.addCategoryFeatures);
 
 router.delete(
   "/deleteCategoryFeatures/:categoryId/:featureId",
-  controller.deleteCategoryFeatures
+  controller.deleteCategoryFeatures,
 );
 router.delete(
   "/deletesubCategoryFeatures/:categoryId/subCategory/:subCategoryId/:featureId",
-  controller.deletesubCategoryFeatures
+  controller.deletesubCategoryFeatures,
 );
 
 router.put(
   "/categories/:categoryId/subCategory/:subCategoryId",
-  controller.updateSubCategoryField
+  controller.updateSubCategoryField,
 );
 
 //features end
 router.get(
   "/getallProductsBySubCategory",
-  controller.getallProductsBySubCategory
+  controller.getallProductsBySubCategory,
 );
 
 router.get(
   "/getCategoryByTypeModified/:type",
-  controller.getCategoriesByTypeModified
+  controller.getCategoriesByTypeModified,
 );
 router.get(
   "/getCategoriesByTypeOnlyNames/:type",
-  controller.getCategoriesByTypeOnlyNames
+  controller.getCategoriesByTypeOnlyNames,
 );
 router.get("/getCategoryByName/:categoryName", controller.getCategoryByName);
 router.get("/getCategoriesByType/:type", controller.getCategoriesByType);
 router.get(
   "/getCategoriesByTypeLimtedData/:type",
-  controller.getCategoriesByTypeWithLimitedData
+  controller.getCategoriesByTypeWithLimitedData,
 );
 router.get("/getSubCategories/:categoryName", controller.getSubCategories);
 router.get(
   "/getCategoryWithSubCategoryByName/:categoryName",
-  controller.getCategoryWithSubCategoryByName
+  controller.getCategoryWithSubCategoryByName,
 );
 router.get(
   "/getSubCategoryDetailByCategoryAndSubCategoryName",
-  controller.getSubCategoryDetailByCategoryAndSubCategoryName
+  controller.getSubCategoryDetailByCategoryAndSubCategoryName,
 );
 router.delete("/deleteCategory/:categoryName", controller.deleteCategory);
 router.delete(
   "/deleteSubCategory/:categoryId/subCategory/:subcategoryId",
-  controller.DeleteSubCategory
+  controller.DeleteSubCategory,
 );
 router.post(
   "/createSubCategory/:categoryId",
   uploadImage.fields([{ name: "image", maxCount: 1 }]),
-  controller.CreateSubCategory
+  controller.CreateSubCategory,
 );
 //get faqs of a category
 router.get("/getCategoryFaq/:categoryId", controller.getCategoryFaq);
 router.delete("/categories/:categoryId/faq/:faqId", controller.deleteFaq);
 router.delete(
   "/categories/:categoryId/subCategory/:subCategoryId/faq/:faqId",
-  controller.deleteSubCategoryFaq
+  controller.deleteSubCategoryFaq,
 );
 router.delete(
   "/categories/:categoryId/subCategory/:subCategoryId/feature/:featureId",
-  controller.deleteSubCategoryFeature
+  controller.deleteSubCategoryFeature,
 );
 router.delete(
   "/categories/:categoryId/subCategory/:subCategoryId/product/:productId",
-  controller.deleteSubCategoryProduct
+  controller.deleteSubCategoryProduct,
 );
 router.post("/categories/:categoryId/faq", controller.addFaqToCategory);
 
@@ -319,34 +314,34 @@ router.get("/checkKeyword", controller.checkKeyword);
 router.post(
   "/updateCategoryFirstGrid/:categoryId",
   uploadImage.fields([{ name: "firstImage", maxCount: 1 }]),
-  controller.updateCategoryFirstGrid
+  controller.updateCategoryFirstGrid,
 );
 router.post(
   "/updateCategorySecondGrid/:categoryId",
   uploadImage.fields([{ name: "secondImage", maxCount: 1 }]),
-  controller.updateCategorySecondGrid
+  controller.updateCategorySecondGrid,
 );
 
 router.patch(
   "/deleteCategoryFirstGrid/:categoryId",
-  controller.deleteCategoryFirstGrid
+  controller.deleteCategoryFirstGrid,
 );
 router.patch(
   "/deleteCategorySecondGrid/:categoryId",
-  controller.deleteCategorySecondGrid
+  controller.deleteCategorySecondGrid,
 );
 router.patch(
   "/updatecategorymetadata/:categoryName",
-  controller.updateCategoryMetadata
+  controller.updateCategoryMetadata,
 );
 
 router.patch(
   "/updatecategoryh1title/:categoryName",
-  controller.updateCategoryh1title
+  controller.updateCategoryh1title,
 );
 router.patch(
   "/updatePdescCategory/:categoryName",
-  controller.updatePdescCategoryByName
+  controller.updatePdescCategoryByName,
 );
 // router.put("/EditSubCategory/:categoryId/subcategory/:subcategoryId", controller.EditSubCategory)
 router.get("/citiesAndHobbies", controller.getCitiesAndHobbies);
@@ -354,11 +349,11 @@ router.get("/citiesAndHobbies", controller.getCitiesAndHobbies);
 router.get("/trendingCategories", trendingController.trendingCategories);
 router.get(
   "/trendingCategoriesNames",
-  trendingController.trendingCategoriesNames
+  trendingController.trendingCategoriesNames,
 );
 router.get(
   "/homeTrendingCategoriesImgAndType",
-  trendingController.homeTrendingCategoriesImgAndType
+  trendingController.homeTrendingCategoriesImgAndType,
 );
 router.get("/popularSearchProducts", trendingController.popularSearchProducts);
 
@@ -372,7 +367,7 @@ router
   // .post("/preferences", recommendationController.preferences)
   .get(
     "/getRecommendationCategoryWise",
-    recommendationController.getRecommendationCategoryWise
+    recommendationController.getRecommendationCategoryWise,
   );
 
 // cart 🛒
@@ -381,15 +376,15 @@ router
 router.post("/cart/service/quantity", cartController.increaseServiceQuantity);
 router.post(
   "/cart/service/addServicesToProduct",
-  cartController.addServicesToProduct
+  cartController.addServicesToProduct,
 );
 router.post(
   "/cart/service/deleteServiceFromProduct",
-  cartController.deleteServiceFromProduct
+  cartController.deleteServiceFromProduct,
 );
 router.post(
   "/cart/accessory/quantity",
-  cartController.increaseAccessoriesQuantity
+  cartController.increaseAccessoriesQuantity,
 );
 
 //Add free sanple in cart
@@ -421,17 +416,17 @@ router
   .get("/getAllDifferentRoomTypes", roomController.getAllDifferentRoomTypes)
   .get(
     "/getAllCategoriesByRoomType/:roomType",
-    roomController.getAllCategoriesByRoomType
+    roomController.getAllCategoriesByRoomType,
   )
   .get("/getRoomByQuery", roomController.getRoomByQuery)
   .get(
     "/getAllRoomsByCategory/:productCategory",
-    roomController.getAllRoomsByCategory
+    roomController.getAllRoomsByCategory,
   )
   .post("/addSpecialRoomInCategory", roomController.addSpecialRoomInCategory)
   .get(
     "/getCategorySpecialRoom/:categoryName",
-    roomController.getCategorySpecialRoom
+    roomController.getCategorySpecialRoom,
   )
   .get("/getRoomID", roomController.getRoomIDByProductIDAndRoomType);
 
@@ -445,7 +440,7 @@ router
   .post(
     "/roomType",
     uploadImage.array("image", 1),
-    roomTypeController.createRoomType
+    roomTypeController.createRoomType,
   )
   .get("/roomType", roomTypeController.getRoomTypes)
   .delete("/roomType/:roomTypeId", roomTypeController.deleteRoomTypeById);
@@ -456,15 +451,15 @@ router
   .get("/products", productController.fetchAllProducts)
   .get(
     "/getproductbyproductid/:productId",
-    productController.fetchProductByProductId
+    productController.fetchProductByProductId,
   )
   .get(
     "/fetchProductsByCategory/:category",
-    productController.fetchProductsByCategory
+    productController.fetchProductsByCategory,
   )
   .get(
     "/productByCategoryAndSubCategory",
-    productController.fetchProductsByCategoryAndSubCategory
+    productController.fetchProductsByCategoryAndSubCategory,
   )
   .patch("/updateDemandType", productController.updateDemandType)
   .patch("/updateSpecialPrice", productController.updateSpecialPrice)
@@ -475,27 +470,27 @@ router
   .get("/getAllProductsByOffer/:type", productController.getAllProductsByOffer)
   .get(
     "/getAllProductsByDemandType/:type",
-    productController.getAllProductsByDemandType
+    productController.getAllProductsByDemandType,
   )
   .post("/requestForProduct", productController.requestForProduct)
   .get(
     "/getAllProductByAuthorId/:id",
-    productController.getAllProductByAuthorID
+    productController.getAllProductByAuthorID,
   )
   .get(
     "/fetchAllReviewByUserId/:userId",
-    productController.fetchAllReviewByUserId
+    productController.fetchAllReviewByUserId,
   )
   .patch(
     "/removeSpecialPrice/:productId",
-    productController.removeSpecialPrice
+    productController.removeSpecialPrice,
   );
 // Review 🌟
 router
   .post(
     "/createReview",
     uploadImage.array("image", 4),
-    productController.createReview
+    productController.createReview,
   )
   .get("/getReview", productController.getReview)
   .delete("/deleteReview/:reviewId", productController.deleteReview);
@@ -539,18 +534,18 @@ router
       { name: "subHeadingImage2" },
       { name: "suggestionCardImage", maxCount: 1 },
     ]),
-    suggestionController.createSuggestion
+    suggestionController.createSuggestion,
   )
   .get("/fetchAllSuggestions", suggestionController.fetchAllSuggestions)
   .get("/fetchSuggestionById", suggestionController.fetchSuggestionById)
   .get("/fetchSuggestionByTitle", suggestionController.fetchSuggestionByTitle)
   .delete(
     "/deleteSuggestion/:suggestionId",
-    suggestionController.deleteSuggestionById
+    suggestionController.deleteSuggestionById,
   )
   .put(
     "/updateFeatures/:suggestionId",
-    suggestionController.updateSuggestionFeatures
+    suggestionController.updateSuggestionFeatures,
   );
 
 // Demand Type
@@ -571,7 +566,7 @@ router
   .get("/allExternalOffers", Offers.getExternalOffers)
   .get(
     "/getExternalOfferApplicablePrice/:userId/:amount",
-    Offers.getExternalOfferApplicablePrice
+    Offers.getExternalOfferApplicablePrice,
   )
   .delete("/deleteOffer/:type", Offers.deleteOffer)
   .patch("/removeProductFromOffer", Offers.removeProductFromOffer)
@@ -581,7 +576,7 @@ router
   .post(
     "/createSpecialReview",
     uploadImage.array("image", 1),
-    productController.createSpecialReview
+    productController.createSpecialReview,
   )
   .get("/getSpecialReview", productController.getSpecialReview);
 
@@ -616,15 +611,15 @@ router.post("/userLocation", userLocationController.createUserLocation);
 router.get("/userLocation", userLocationController.getUserLocations);
 router.get(
   "/userLocation/:deviceId",
-  userLocationController.getUserLocationByDeviceId
+  userLocationController.getUserLocationByDeviceId,
 );
 router.patch(
   "/userLocation/:deviceId",
-  userLocationController.updateUserLocation
+  userLocationController.updateUserLocation,
 );
 router.delete(
   "/userLocation/:deviceId",
-  userLocationController.deleteUserLocation
+  userLocationController.deleteUserLocation,
 );
 
 // Live Room Admin
@@ -633,12 +628,12 @@ router.get("/liveRoomAdmin", liveRoomAdminController.getLiveRoomAdmins);
 router.get("/liveRoomAdmin/:id", liveRoomAdminController.getLiveRoomAdminById);
 router.delete(
   "/liveRoomAdmin/:id",
-  liveRoomAdminController.deleteLiveRoomAdmin
+  liveRoomAdminController.deleteLiveRoomAdmin,
 );
 router.patch("/liveRoomAdmin/:id", liveRoomAdminController.updateLiveRoomAdmin);
 router.get(
   "/getLiveRoomAdminByEmail/:email",
-  liveRoomAdminController.getLiveRoomAdminByEmail
+  liveRoomAdminController.getLiveRoomAdminByEmail,
 );
 
 // router.post("/createAuthor", authorController.createAuthor);
@@ -658,23 +653,23 @@ router.patch("/shippingRate/:id", shippingRateController.editShippingRate);
 router.delete("/shippingRate/:id", shippingRateController.deleteShippingRate);
 router.get(
   "/calculateShippingDetails/:distance",
-  shippingRateController.calculateShippingDetails
+  shippingRateController.calculateShippingDetails,
 );
 
 router.patch("/likeProduct", productController.likeProduct);
 router.patch("/unlikeProduct", productController.unlikeProduct);
 router.post(
   "/generateMaintenanceDetailPdf",
-  productController.generateMaintenancePdf
+  productController.generateMaintenancePdf,
 );
 router.post(
   "/generateInstallationDetailPdf",
-  productController.generateInstallationPdf
+  productController.generateInstallationPdf,
 );
 
 router.get(
   "/getRankedProductsFoEachCategory",
-  productController.rankedProductsFoEachCategory
+  productController.rankedProductsFoEachCategory,
 );
 
 router.post("/createUrgency", urgencyController.createUrgency);
@@ -687,77 +682,13 @@ router.get("/getAllCategoryByOffer/:type", Offers.getAllCategoryByOffer);
 
 router.get(
   "/fetchAccessoriesByCategory/:category",
-  productController.fetchAccessoriesByCategory
+  productController.fetchAccessoriesByCategory,
 );
 
 // router.patch("/updateInstallationDetails/:categoryName", controller.updateInstallationDetails);
 
 // Purchase
 router.post("/purchase", purchaseController.storePurchase);
-
-// Admin-only endpoint to migrate/replace image URLs across collections.
-router.post(
-  "/admin/migrate-images",
-  /* verifyAdminToken, */ migrateImages.migrate
-);
-
-// verifyAdminToken commented out - authentication disabled for image uploads
-router.post(
-  "/admin/doc/:model/:id/upload",
-  /* verifyAdminToken, */
-  uploadImage.array("file", 4),
-  genericAssetController.uploadForDoc
-);
-
-// verifyAdminToken commented out - authentication disabled for image uploads
-router.get(
-  "/admin/schema-image-fields",
-  /* verifyAdminToken, */
-  adminSchemaController.getImageFields
-);
-
-// Debug endpoint for inspecting image fields in a specific model
-router.get(
-  "/admin/debug/image-fields/:model",
-  /* verifyAdminToken, */
-  adminSchemaController.debugModelImageFields
-);
-
-// Search documents by name/title
-router.get(
-  "/admin/doc/:model/search",
-  /* verifyAdminToken, */
-  documentSearchController.searchDocuments
-);
-
-// Get single document by ID (for fetching full details after search)
-router.get(
-  "/admin/doc/:model/:id",
-  /* verifyAdminToken, */
-  documentSearchController.getDocumentById
-);
-
-// Get all searchable fields (for search dropdowns)
-router.get(
-  "/admin/schema-searchable-fields",
-  /* verifyAdminToken, */
-  schemaFieldsController.getSearchableFields
-);
-
-// Get all registered models (regardless of searchable fields)
-router.get(
-  "/admin/schema-all-models",
-  /* verifyAdminToken, */
-  (req, res) => {
-    const allModels = mongoose.modelNames().sort();
-    console.log(` Returning ${allModels.length} registered models`);
-    res.json({
-      ok: true,
-      models: allModels,
-      count: allModels.length,
-    });
-  }
-);
 
 // DEBUG: Get image fields for a specific model
 router.get(
@@ -794,7 +725,7 @@ router.get(
       return res.json({
         ok: true,
         model,
-        schema_keys: allKeys.slice(0, 20), 
+        schema_keys: allKeys.slice(0, 20),
         total_schema_keys: allKeys.length,
         image_fields: imageFields,
         image_fields_count: imageFields.length,
@@ -803,21 +734,21 @@ router.get(
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 // Cleanup old S3 URLs from specific document field
 router.post(
   "/admin/cleanup-old-urls/:model/:id/:field",
   /* verifyAdminToken, */
-  cleanupController.cleanupOldUrls
+  cleanupController.cleanupOldUrls,
 );
 
 // Cleanup URLs matching pattern across all models
 router.post(
   "/admin/cleanup-pattern",
   /* verifyAdminToken, */
-  cleanupController.cleanupPattern
+  cleanupController.cleanupPattern,
 );
 
 // DEBUG ENDPOINT: Show which models failed to load

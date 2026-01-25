@@ -25,16 +25,13 @@ const safeJSONParse = (str) => {
 
 exports.createProduct = async (req, res) => {
   try {
-    // Log incoming request details
-    // console.log('\n=== NEW PRODUCT CREATION REQUEST ===');
-    // console.log('Request Body:', JSON.stringify(req.body, null, 2));
 
     // Extract image URLs from request body
-    const { 
-      imageUrls = [], 
-      colorImageUrls = [], 
-      featureImageUrls = [], 
-      coreValueImageUrls = [] 
+    const {
+      imageUrls = [],
+      colorImageUrls = [],
+      featureImageUrls = [],
+      coreValueImageUrls = [],
     } = req.body;
 
     // console.log('Provided Image URLs:', {
@@ -68,9 +65,9 @@ exports.createProduct = async (req, res) => {
       purchaseMode,
       otherRoom,
       productDescription,
-      coreValues = [],
+      coreValueIds = [],
       colors = [],
-      features = [],
+      featureIds = [],
       material,
       productType,
       availability,
@@ -128,7 +125,7 @@ exports.createProduct = async (req, res) => {
           parsedOffers = [parsedOffers];
         }
 
-        mappedExternalOffers = parsedOffers.map(offer => ({
+        mappedExternalOffers = parsedOffers.map((offer) => ({
           offerId: new mongoose.Types.ObjectId(offer.offerId),
           name: offer.name,
           type: offer.type,
@@ -142,10 +139,10 @@ exports.createProduct = async (req, res) => {
 
         // console.log('Final Mapped Offers:', JSON.stringify(mappedExternalOffers, null, 2));
       } catch (error) {
-        console.error('Offer Processing Error:', {
+        console.error("Offer Processing Error:", {
           message: error.message,
           rawOffers: req.body.externalOffers,
-          stack: error.stack
+          stack: error.stack,
         });
         throw new Error(`Failed to process external offers: ${error.message}`);
       }
@@ -170,23 +167,20 @@ exports.createProduct = async (req, res) => {
     //   totalImages: mappedColors.flatMap(c => c.images).length
     // }, null, 2));
 
-    // Process features and core values
-    const mappedFeatures = features.map((feature, index) => ({
-      text: feature.heading,
-      image: featureImageUrls[index],
-    }));
+    const validatedFeatureIds = Array.isArray(featureIds)
+      ? featureIds
+      : typeof featureIds === "string"
+      ? featureIds.split(",").filter((id) => id.trim())
+      : [];
 
-    const mappedCoreValues = coreValues.map((coreValue, index) => ({
-      heading: coreValue.heading,
-      text: coreValue.subheading,
-      image: coreValueImageUrls[index],
-    }));
-
-    // console.log('Mapped Features:', JSON.stringify(mappedFeatures, null, 2));
-    // console.log('Mapped Core Values:', JSON.stringify(mappedCoreValues, null, 2));
+    const validatedCoreValueIds = Array.isArray(coreValueIds)
+      ? coreValueIds
+      : typeof coreValueIds === "string"
+      ? coreValueIds.split(",").filter((id) => id.trim())
+      : [];
 
     // Process dimensions
-    const structuredDimensions = dimensions?.map(dimension => ({
+    const structuredDimensions = dimensions?.map((dimension) => ({
       dimension: dimension.dimension,
       price: dimension.price,
       discountedprice: dimension.discountedprice || null,
@@ -229,14 +223,13 @@ exports.createProduct = async (req, res) => {
     const categoryData = await categoriesDB
       .findOne({ name: category })
       .select("subcategories");
-      
     if (!categoryData) {
       console.error(`Category not found: ${category}`);
       return res.status(404).json({ message: "Category not found" });
     }
 
     const subCategoryData = categoryData.subcategories.find(
-      sub => sub.name === subCategory
+      (sub) => sub.name === subCategory
     );
 
     // Create product document
@@ -262,8 +255,8 @@ exports.createProduct = async (req, res) => {
       purchaseMode,
       otherRoom,
       productDescription,
-      coreValues: mappedCoreValues,
-      features: mappedFeatures,
+      coreValueIds: validatedCoreValueIds,
+      featureIds: validatedFeatureIds,
       material,
       productType,
       availability,
@@ -279,6 +272,10 @@ exports.createProduct = async (req, res) => {
       faqs: faqs || [],
     });
 
+    console.log("✅ BEFORE SAVING TO DB:");
+    console.log("Product coreValueIds:", newProduct.coreValueIds);
+    console.log("Product featureIds:", newProduct.featureIds);
+
     // console.log('Final Product Document:', JSON.stringify({
     //   ...newProduct.toObject(),
     //   // Omit large arrays for readability
@@ -289,9 +286,8 @@ exports.createProduct = async (req, res) => {
     // }, null, 2));
 
     await newProduct.save();
-    // console.log('Product successfully saved to database');
-    res.status(201).json({ message: "New Product created successfully!" });
 
+    res.status(201).json({ message: "New Product created successfully!" });
   } catch (error) {
     // console.error('Product Creation Error:', {
     //   message: error.message,
@@ -299,9 +295,9 @@ exports.createProduct = async (req, res) => {
     //   requestBody: JSON.stringify(req.body, null, 2),
     //   timestamp: new Date().toISOString()
     // });
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Error while creating new product",
-      message: error.message
+      message: error.message,
     });
   }
 };
