@@ -69,6 +69,12 @@ exports.getSliderCircle = async (req, res) => {
     const sliders = await SliderDB.find().sort({ createdAt: -1 });
     const length = sliders.length;
     let result = sliders.slice(skip, lastIndex);
+    res.set({
+      'Cache-Control': 'public, max-age=3600, s-maxage=86400',
+      'ETag': `"slider-v1-${length}"`,
+      'Vary': 'Accept-Encoding'
+    });
+    
     res.status(200).json({ result, length });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -4,12 +4,19 @@ const app = express();
 const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
+const compression = require("compression");
 const PORT = process.env.PORT || 4000;
 const socket = require("socket.io");
 const bodyParser = require("body-parser");
 
 // database connection
 require("./database/connection")();
+app.use(
+  compression({
+    level: 6, 
+    threshold: 1024, // Only compress responses larger than 1KB
+  }),
+);
 
 // CORS policy
 app.use(
@@ -24,15 +31,15 @@ app.use(
       "https://www.ayatrio.com",
       "http://ayatrio-admin.s3-website.ap-south-1.amazonaws.com",
       "https://main.d2e7lk624os6uh.amplifyapp.com",
-      "http://13.203.148.236:3000" // ← your current frontend IP
+      "http://13.203.148.236:3000", // ← your current frontend IP
     ],
     methods: "GET,POST,PUT,DELETE,PATCH",
     credentials: true,
-  })
+  }),
 );
 
-app.use(express.json({limit: "50mb"}));
-app.use(express.text({limit: "50mb"}));;
+app.use(express.json({ limit: "50mb" }));
+app.use(express.text({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 // app.use(bodyParser.json({ limit: "50mb" }));
 
@@ -42,13 +49,12 @@ app.use(
     secret: process.env.SECRET_KEY,
     resave: false,
     saveUninitialized: true,
-  })
+  }),
 );
 
-app.get('/', (req, res) => {
-  res.send('Welcome to Ayatrio API');
-}
-);
+app.get("/", (req, res) => {
+  res.send("Welcome to Ayatrio API");
+});
 
 // // setuppassport
 app.use(passport.initialize());
@@ -59,6 +65,17 @@ require("./config/passport")(passport);
 
 // passport auth routes
 app.use("/auth", require("./routes/googleAuth"));
+
+app.use("/api", (req, res, next) => {
+  // Cache GET requests for 1 hour, CDN for 24 hours
+  if (req.method === "GET") {
+    res.setHeader(
+      "Cache-Control",
+      "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+    );
+  }
+  next();
+});
 
 // other routes
 app.use("/api", require("./routes/routes"));
@@ -106,9 +123,9 @@ io.on("connection", (socket) => {
   socket.on("join-room", ({ roomId, userInfo: userData }) => {
     // Store user name
 
-    console.log("THis is user data",userData);
+    console.log("THis is user data", userData);
     if (userData && userData.displayName) {
-      userInfo.set(socket.id,userData.displayName);
+      userInfo.set(socket.id, userData.displayName);
     }
 
     const previousRoom = userToRoom.get(socket.id);
@@ -119,14 +136,14 @@ io.on("connection", (socket) => {
 
     if (!roomToUsers.has(roomId)) {
       roomToUsers.set(roomId, new Set());
-      roomMetadata.set(roomId, { 
-        createdAt: Date.now(), 
-        maxUsers: 10
+      roomMetadata.set(roomId, {
+        createdAt: Date.now(),
+        maxUsers: 10,
       });
     }
 
     const room = roomToUsers.get(roomId);
-    
+
     if (room.size >= roomMetadata.get(roomId).maxUsers) {
       socket.emit("room-full");
       return;
@@ -138,15 +155,16 @@ io.on("connection", (socket) => {
 
     // Send user names along with user joined event
     const usersWithNames = {};
-    Array.from(room).forEach(userId => {
-      usersWithNames[userId] = userInfo.get(userId) || `User ${userId.slice(-4)}`;
+    Array.from(room).forEach((userId) => {
+      usersWithNames[userId] =
+        userInfo.get(userId) || `User ${userId.slice(-4)}`;
     });
 
     io.to(roomId).emit("user-joined", {
       userId: socket.id,
       users: Array.from(room),
       userCount: room.size,
-      userNames: usersWithNames
+      userNames: usersWithNames,
     });
   });
 
@@ -163,30 +181,33 @@ io.on("connection", (socket) => {
     if (roomId && roomToUsers.has(roomId)) {
       roomToUsers.get(roomId).delete(socket.id);
       userToRoom.delete(socket.id);
-        userInfo.delete(socket.id); // Clean up user name
-      socket.to(roomId).emit("user-left", { 
+      userInfo.delete(socket.id); // Clean up user name
+      socket.to(roomId).emit("user-left", {
         userId: socket.id,
-        userCount: roomToUsers.get(roomId).size 
+        userCount: roomToUsers.get(roomId).size,
       });
     }
   });
 
   // Rate limiting
   const signalRateLimit = new Map();
-  
+
   const checkRateLimit = (eventType) => {
     const key = `${socket.id}-${eventType}`;
     const now = Date.now();
-    const limit = signalRateLimit.get(key) || { count: 0, resetTime: now + 1000 };
-    
+    const limit = signalRateLimit.get(key) || {
+      count: 0,
+      resetTime: now + 1000,
+    };
+
     if (now > limit.resetTime) {
       limit.count = 0;
       limit.resetTime = now + 1000;
     }
-    
+
     limit.count++;
     signalRateLimit.set(key, limit);
-    
+
     return limit.count <= 50;
   };
 
