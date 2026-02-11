@@ -2,13 +2,8 @@ const fs = require("fs");
 var request = require("request");
 var { google } = require("googleapis");
 
-// Load credentials from environment variable or key.json
-let key;
-if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-  key = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS);
-} else {
-  key = require("./key.json");
-}
+// Load credentials from environment variable
+const key = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS || "{}");
 
 exports.getIndexing = async (req, res) => {
   try {
