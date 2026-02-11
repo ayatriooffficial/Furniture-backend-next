@@ -34,7 +34,7 @@ function findSearchableFields(schemaObj, prefix = "") {
 
     const keyLower = key.toLowerCase();
     const isSearchField = SEARCH_FIELD_PATTERNS.some((pattern) =>
-      keyLower.includes(pattern.toLowerCase())
+      keyLower.includes(pattern.toLowerCase()),
     );
 
     if (isSearchField) {
@@ -96,10 +96,6 @@ async function searchDocuments(req, res) {
     } else {
       searchFields = findSearchableFields(Model.schema.tree);
     }
-
-    console.log(
-      `[SEARCH] Model: ${model}, Field: ${field || "all"}, Query: "${q}"`
-    );
 
     if (searchFields.length === 0) {
       return res.json({

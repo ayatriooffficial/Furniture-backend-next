@@ -81,7 +81,6 @@ exports.getSliderCircle = async (req, res) => {
   }
 };
 
-// DELETE:  '/api/deleteSliderCircle/:circleId' -  homepageRoutes.js
 exports.deleteSliderCircle = async (req, res) => {
   const circleId = req.params.circleId;
 

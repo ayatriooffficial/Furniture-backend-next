@@ -23,7 +23,6 @@ function detectFieldType(node) {
     return "array";
   }
 
-  
   if (typeof node === "object") return "object";
   return null;
 }
@@ -44,7 +43,7 @@ function isImageField(key) {
 
 function traverseSchemaTree(tree, prefix = "", depth = 0) {
   const results = [];
-  const MAX_DEPTH = 5; 
+  const MAX_DEPTH = 5;
 
   if (depth > MAX_DEPTH) return results;
 
@@ -81,21 +80,18 @@ function traverseSchemaTree(tree, prefix = "", depth = 0) {
           else if (el && typeof el === "object") {
             results.push(...traverseSchemaTree(el, path, depth + 1));
           }
-        }
-        else if (
+        } else if (
           typeof node.type === "object" &&
           node.type.constructor.name === "Object"
         ) {
           results.push(...traverseSchemaTree(node.type, path, depth + 1));
         }
-      }
-      else if (Array.isArray(node)) {
+      } else if (Array.isArray(node)) {
         const el = node[0];
         if (el && typeof el === "object") {
           results.push(...traverseSchemaTree(el, path, depth + 1));
         }
-      }
-      else if (!Array.isArray(node)) {
+      } else if (!Array.isArray(node)) {
         // Make sure it's not a native type being misidentified
         if (node.constructor && node.constructor.name === "Object") {
           results.push(...traverseSchemaTree(node, path, depth + 1));
@@ -111,9 +107,6 @@ async function getImageFields(req, res) {
   try {
     const models = {};
     const modelNames = mongoose.modelNames();
-    console.log("\n ========== IMAGE FIELD DETECTION START ==========");
-    console.log(` Total registered models: ${modelNames.length}`);
-    console.log(`Models: ${modelNames.sort().join(", ")}\n`);
 
     for (const name of modelNames) {
       try {
@@ -122,15 +115,6 @@ async function getImageFields(req, res) {
 
         const fields = traverseSchemaTree(tree);
         models[name] = fields && fields.length > 0 ? fields : [];
-
-        if (fields && fields.length > 0) {
-          console.log(` ${name.padEnd(20)}: ${fields.length} field(s)`);
-          fields.forEach((f) => {
-            console.log(`   └─ ${f.path.padEnd(35)} [${f.type}]`);
-          });
-        } else {
-          console.log(`⚠️  ${name.padEnd(20)}: (no image fields)`);
-        }
       } catch (e) {
         console.error(` ${name}: ${e.message}`);
         models[name] = [];
@@ -140,12 +124,6 @@ async function getImageFields(req, res) {
       .filter(([_, fields]) => fields.length > 0)
       .sort(([a], [b]) => a.localeCompare(b));
 
-    console.log(
-      `Models with image fields: ${modelsWithImages.length}/${modelNames.length}\n`
-    );
-    modelsWithImages.forEach(([modelName, fields]) => {
-      console.log(`${modelName}: ${fields.map((f) => f.path).join(", ")}`);
-    });
     return res.json({ ok: true, models });
   } catch (err) {
     console.error(" getImageFields error:", err);
@@ -167,8 +145,6 @@ async function debugModelImageFields(req, res) {
     const Model = mongoose.model(model);
     const tree = Model.schema.tree;
     const fields = traverseSchemaTree(tree);
-
-    console.log(`Found ${fields.length} image fields:`, fields);
 
     return res.json({
       ok: true,

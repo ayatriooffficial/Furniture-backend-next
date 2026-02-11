@@ -3,73 +3,37 @@ const mongoose = require("mongoose");
 
 const modelsToLoad = [
   "admin",
-  "Author",
-  "bannerSection",
   "Cart",
-  "Category",
   "CategoryDescription",
-  "CityHobbie",
   "DemandType",
   "ExternalOffer",
   "FreeSampleCart",
   "HashtagPost",
   "Header",
-  "imgchanger",
   "ImgGrid",
-  "ImgSection",
   "LiveRoomAdmin",
-  "mapmodel",
-  "MidSection",
-  "ModelCategory",
-  "newProductSection",
   "Offers",
-  "Order",
-  "poster",
-  "Preferences",
   "ProfileContent",
-  "Products",
   "Purchase",
   "RequestedProduct",
-  "review",
-  "room",
-  "RoomMain",
   "roomType",
   "ShippingRate",
   "Slider",
-  "SpecialReview",
-  "staticSection",
   "Store",
   "Suggestions",
-  "Urgency",
-  "User",
   "UserLocation",
-  "VEModel",
 ];
 
 modelsToLoad.forEach((modelName) => {
   try {
     require(`../model/${modelName}`);
-    console.log(`✅ Loaded model: ${modelName}`);
   } catch (err) {
     console.error(` FAILED to load model ${modelName}:`, err.message);
   }
 });
 
-// Log all registered models
+// Load all registered models from Mongoose
 const registered = mongoose.modelNames();
-console.log("\n ALL REGISTERED MODELS IN MONGOOSE:");
-console.log(registered);
-console.log(
-  ` Total models registered: ${registered.length} / ${modelsToLoad.length}`,
-);
-
-// Identify missing models
-const missing = modelsToLoad.filter((m) => !registered.includes(m));
-if (missing.length > 0) {
-  console.warn(" Missing models that failed to register:", missing);
-} else {
-  console.log("ALL MODELS SUCCESSFULLY REGISTERED!");
-}
 
 // Map mongoose model names to expected names
 const expectedModels = [
@@ -125,6 +89,7 @@ if (modelDiscrepancies.length > 0) {
 // import middleware
 const { uploadImage } = require("../middleware/uploadImage");
 const verifyAdminToken = require("../middleware/verifyAdminToken");
+const { requireAuth, optionalAuth } = require("../middleware/verifyToken");
 const productAssetController = require("../controller/productAssetController");
 const cleanupController = require("../controller/cleanupController");
 // import controllers
@@ -373,36 +338,39 @@ router
 // cart 🛒
 
 // Route to increase service quantity
-router.post("/cart/service/quantity", cartController.increaseServiceQuantity);
+router.post("/cart/service/quantity", optionalAuth, cartController.increaseServiceQuantity);
 router.post(
   "/cart/service/addServicesToProduct",
+    optionalAuth,
   cartController.addServicesToProduct,
 );
 router.post(
   "/cart/service/deleteServiceFromProduct",
+    optionalAuth,
   cartController.deleteServiceFromProduct,
 );
 router.post(
   "/cart/accessory/quantity",
+    optionalAuth,
   cartController.increaseAccessoriesQuantity,
 );
 
 //Add free sanple in cart
 
-router.get("/cart/freesampling", cartController.getFreeSamples);
-router.post("/cart/freeSampling", cartController.addFreeSample);
-router.delete("/cart/freeSampling", cartController.deleteFreeSample);
+router.get("/cart/freesampling", optionalAuth, cartController.getFreeSamples);
+router.post("/cart/freeSampling", optionalAuth, cartController.addFreeSample);
+router.delete("/cart/freeSampling", optionalAuth, cartController.deleteFreeSample);
 
-router
-  .post("/cart", cartController.createCart)
-  .put("/cart", cartController.updateCartItemQuantity)
-  .get("/cart", cartController.getCart)
-  .delete("/cart", cartController.deleteCartItem);
+// ✅ Cart routes - use individual definitions instead of chaining
+router.post("/cart", optionalAuth, cartController.createCart);
+router.put("/cart", optionalAuth, cartController.updateCartItemQuantity);
+router.get("/cart", optionalAuth, cartController.getCart);
+router.delete("/cart", optionalAuth, cartController.deleteCartItem);
 
 // payment 💲
 router
-  .post("/checkout", orderController.checkout)
-  .post("/order", orderController.order)
+  .post("/checkout", requireAuth, orderController.checkout)
+  .post("/order", requireAuth, orderController.order)
   .get("/order/:orderId", orderController.getOrder)
   .put("/order", orderController.updateOrder); // payment - true
 

@@ -43,12 +43,15 @@ exports.createCart = async (req, res) => {
       return;
     }
 
-    const price = item.specialprice?.price || item.discountedprice?.price ||  item.perUnitPrice;
+    const price =
+      item.specialprice?.price ||
+      item.discountedprice?.price ||
+      item.perUnitPrice;
     const name = item.productTitle;
 
     if (cart) {
       const itemIndex = cart.items.findIndex(
-        (item) => item.productId._id.toString() === productId
+        (item) => item.productId._id.toString() === productId,
       );
 
       if (itemIndex > -1) {
@@ -172,7 +175,7 @@ exports.updateCartItemQuantity = async (req, res) => {
     }
 
     const itemIndex = cart.items.findIndex(
-      (item) => item.productId._id == productId
+      (item) => item.productId._id == productId,
     );
 
     if (itemIndex === -1) {
@@ -180,8 +183,13 @@ exports.updateCartItemQuantity = async (req, res) => {
       return;
     }
 
-    // Update the quantity of the item
-    cart.items[itemIndex].quantity = quantity;
+    // Remove item if quantity becomes 0 or less
+    if (quantity < 1) {
+      cart.items.splice(itemIndex, 1);
+    } else {
+      // Update the quantity of the item
+      cart.items[itemIndex].quantity = quantity;
+    }
 
     // Recalculate the total bill
     cart.bill = cart.items.reduce((acc, curr) => {
@@ -263,7 +271,7 @@ exports.deleteCartItem = async (req, res) => {
 
     // Find the index of the product in the items array
     const productIndex = cart.items.findIndex(
-      (item) => item.productId._id.toString() === productId
+      (item) => item.productId._id.toString() === productId,
     );
 
     // //console.log(productIndex)
@@ -319,7 +327,7 @@ exports.increaseServiceQuantity = async (req, res) => {
 
     // Find the index of the product in the cart
     const productIndex = cart.items.findIndex(
-      (item) => item.productId._id.toString() === productId
+      (item) => item.productId._id.toString() === productId,
     );
 
     if (productIndex === -1) {
@@ -328,7 +336,7 @@ exports.increaseServiceQuantity = async (req, res) => {
 
     // Find the index of the service in the product's selectedServices array
     const serviceIndex = cart.items[productIndex].selectedServices.findIndex(
-      (service) => service._id.toString() === serviceId
+      (service) => service._id.toString() === serviceId,
     );
 
     if (serviceIndex === -1) {
@@ -346,7 +354,7 @@ exports.increaseServiceQuantity = async (req, res) => {
         (serviceAcc, service) => {
           return serviceAcc + service.cost * service.quantity;
         },
-        0
+        0,
       );
       return acc + curr.quantity * curr.price + servicesCost;
     }, 0);
@@ -387,7 +395,7 @@ exports.addServicesToProduct = async (req, res) => {
     }
 
     const productIndex = cart.items.findIndex(
-      (item) => item.productId._id.toString() === productId
+      (item) => item.productId._id.toString() === productId,
     );
 
     if (productIndex === -1) {
@@ -397,25 +405,26 @@ exports.addServicesToProduct = async (req, res) => {
     cart.items[productIndex].selectedServices = selectedServices;
 
     cart.bill = cart.items.reduce((acc, curr) => {
-      const servicesCost = curr.selectedServices.reduce((serviceAcc, service) => {
-        return serviceAcc + service.cost * service.quantity;
-      }, 0);
+      const servicesCost = curr.selectedServices.reduce(
+        (serviceAcc, service) => {
+          return serviceAcc + service.cost * service.quantity;
+        },
+        0,
+      );
       return acc + curr.quantity * curr.price + servicesCost;
     }, 0);
 
     await cart.save();
 
     res.status(200).send(cart);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error.message });
   }
-
 };
 
 exports.deleteServiceFromProduct = async (req, res) => {
-  try{
+  try {
     const { deviceId, productId, serviceId } = req.body;
     //console.log(deviceId)
     //console.log(req.body)
@@ -438,7 +447,7 @@ exports.deleteServiceFromProduct = async (req, res) => {
     }
 
     const productIndex = cart.items.findIndex(
-      (item) => item.productId._id.toString() === productId
+      (item) => item.productId._id.toString() === productId,
     );
     //console.log(productIndex)
     if (productIndex === -1) {
@@ -446,29 +455,34 @@ exports.deleteServiceFromProduct = async (req, res) => {
     }
 
     const serviceIndex = cart.items[productIndex].selectedServices.findIndex(
-      (service) => service._id.toString() === serviceId
+      (service) => service._id.toString() === serviceId,
     );
 
     if (serviceIndex === -1) {
-      return res.status(404).send({ message: "Service not found in the product" });
+      return res
+        .status(404)
+        .send({ message: "Service not found in the product" });
     }
 
     cart.items[productIndex].selectedServices.splice(serviceIndex, 1);
 
     cart.bill = cart.items.reduce((acc, curr) => {
-      const servicesCost = curr.selectedServices.reduce((serviceAcc, service) => {
-        return serviceAcc + service.cost * service.quantity;
-      }, 0);
+      const servicesCost = curr.selectedServices.reduce(
+        (serviceAcc, service) => {
+          return serviceAcc + service.cost * service.quantity;
+        },
+        0,
+      );
       return acc + curr.quantity * curr.price + servicesCost;
     }, 0);
 
     await cart.save();
     //console.log(cart)
     res.status(200).send(cart);
-} catch (error) {
-  console.error(error);
-  res.status(500).json({ message: error.message });
-}
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
 exports.increaseAccessoriesQuantity = async (req, res) => {
@@ -496,7 +510,7 @@ exports.increaseAccessoriesQuantity = async (req, res) => {
 
     // Find the index of the product in the cart
     const productIndex = cart.items.findIndex(
-      (item) => item.productId._id.toString() === productId
+      (item) => item.productId._id.toString() === productId,
     );
 
     if (productIndex === -1) {
@@ -506,7 +520,7 @@ exports.increaseAccessoriesQuantity = async (req, res) => {
     const accessoryIndex = cart.items[
       productIndex
     ].selectedAccessories.findIndex(
-      (accessory) => accessory._id.toString() === accessoryId
+      (accessory) => accessory._id.toString() === accessoryId,
     );
 
     if (accessoryIndex === -1) {
@@ -526,7 +540,7 @@ exports.increaseAccessoriesQuantity = async (req, res) => {
         (acc, accessory) => {
           return acc + (accessory.cost * accessory.quantity || 0);
         },
-        0
+        0,
       );
       return acc + itemTotal + accessoriesTotal;
     }, 0);
@@ -633,7 +647,7 @@ exports.deleteFreeSample = async (req, res) => {
       },
       {
         new: true,
-      }
+      },
     );
 
     res.status(200).send(updatedCart);

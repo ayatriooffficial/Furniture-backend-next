@@ -1,6 +1,6 @@
 const passport = require("passport");
 const router = require("express").Router();
-const verifyToken = require("../middleware/verifyToken");
+const { verifyToken } = require("../middleware/verifyToken");
 const generateToken = require("../config/jwt");
 const userDB = require("../model/User");
 const { sendEmailToUser } = require("../controller/sendmail");
@@ -123,6 +123,13 @@ router.get("/logout", (req, res, next) => {
     if (err) {
       return next(err);
     }
+    // Explicitly clear JWT cookie
+    res.clearCookie("jwt", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "None",
+      domain: ".ayatrio.com",
+    });
     res.redirect(`${baseURL}/`);
   });
 });

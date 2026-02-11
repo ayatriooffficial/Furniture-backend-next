@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const verifyToken = require("../middleware/verifyToken");
+const { verifyToken } = require("../middleware/verifyToken");
 const adminController = require("../controller/auth/admin");
 const { uploadImage } = require("../middleware/uploadImage");
 const verifyAdminToken = require("../middleware/verifyAdminToken");
@@ -27,7 +27,7 @@ router.post(
   (req, res, next) => {
     const imageUrls = req.files.map((file) => file.location);
     res.json({ message: "Images uploaded successfully", imageUrls });
-  }
+  },
 );
 
 module.exports = router;

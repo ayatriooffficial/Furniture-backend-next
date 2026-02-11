@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const passport = require("passport");
 const compression = require("compression");
@@ -13,7 +14,7 @@ const bodyParser = require("body-parser");
 require("./database/connection")();
 app.use(
   compression({
-    level: 6, 
+    level: 6,
     threshold: 1024, // Only compress responses larger than 1KB
   }),
 );
@@ -41,9 +42,12 @@ app.use(
 app.use(express.json({ limit: "50mb" }));
 app.use(express.text({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-// app.use(bodyParser.json({ limit: "50mb" }));
+app.use(cookieParser()); // app.use(bodyParser.json({ limit: "50mb" }));
 
-// setup session
+// ✅ Trust proxy to pass trusted client IP
+app.set("trust proxy", 1);
+
+// ✅ Session middleware with proper cookie configuration
 app.use(
   session({
     secret: process.env.SECRET_KEY,
@@ -122,8 +126,6 @@ const userInfo = new Map();
 io.on("connection", (socket) => {
   socket.on("join-room", ({ roomId, userInfo: userData }) => {
     // Store user name
-
-    console.log("THis is user data", userData);
     if (userData && userData.displayName) {
       userInfo.set(socket.id, userData.displayName);
     }
@@ -230,12 +232,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("request_join", (data) => {
-    console.log("Join request received:", data);
     io.emit("join_request", { socketId: socket.id, ...data });
   });
 
   socket.on("admin_response", (response) => {
-    console.log("Admin response received:", response);
     const { socketId, accepted, roomId } = response;
     if (accepted) {
       io.to(socketId).emit("join_accepted", { roomId });

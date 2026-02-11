@@ -19,13 +19,6 @@ function extractUrl(file) {
   if (!file) return null;
   // Cloudinary returns URL in 'path' property
   const url = file.path || file.secure_url || file.location || file.url || null;
-  console.log("📸 Extracted URL from file:", {
-    path: file.path,
-    secure_url: file.secure_url,
-    location: file.location,
-    url: file.url,
-    extracted: url,
-  });
   return url;
 }
 
@@ -52,19 +45,6 @@ async function uploadForDoc(req, res) {
       req.body?.colorIndex !== undefined
         ? parseInt(req.body.colorIndex)
         : undefined;
-
-    console.log("📤 Upload request:", {
-      model,
-      id,
-      field,
-      filterKey,
-      filterValue,
-      replaceIndex,
-      replaceIndices,
-      colorIndex,
-    });
-    console.log("   req.body:", req.body);
-    console.log("   req.files count:", req.files?.length || 0);
 
     if (!model || !id || !field)
       return res.status(400).json({
@@ -114,14 +94,8 @@ async function uploadForDoc(req, res) {
       return res.status(500).json({ error: "No uploaded files found" });
 
     const val = getNested(doc, field);
-    console.log(" Target field inspection:", {
-      field,
-      valueType: typeof val,
-      isArray: Array.isArray(val),
-    });
 
     if (colorIndex !== undefined && Array.isArray(val) && val[colorIndex]) {
-      console.log(` Handling color variant at index ${colorIndex}`);
       const colorVariant = val[colorIndex];
 
       if (Array.isArray(colorVariant.images)) {
@@ -132,16 +106,13 @@ async function uploadForDoc(req, res) {
             const idx = replaceIndices[i];
             if (idx !== undefined && !isNaN(parseInt(idx))) {
               cur[parseInt(idx)] = urls[i];
-              console.log(`  ↳ Replaced URL at index ${idx}`);
             } else {
               cur.push(urls[i]);
-              console.log(`  ↳ Appended URL (no more replace indices)`);
             }
           }
         } else {
           // Append all URLs
           cur.push(...urls);
-          console.log("  ↳ Pushed", urls.length, "URLs to color variant");
         }
 
         colorVariant.images = cur;
@@ -149,13 +120,6 @@ async function uploadForDoc(req, res) {
         setNested(doc, field, val);
       }
       await doc.save();
-      console.log(" Document saved successfully:", {
-        model,
-        id,
-        field,
-        colorIndex,
-        urls,
-      });
       return res.json({ success: true, urls, model, id, field, colorIndex });
     }
 
@@ -168,11 +132,9 @@ async function uploadForDoc(req, res) {
             const idx = replaceIndices[i];
             if (idx !== undefined && !isNaN(parseInt(idx))) {
               cur[parseInt(idx)] = urls[i];
-              console.log(`  ↳ Replaced URL at index ${idx}`);
             } else {
               // If we run out of replace indices, append the rest
               cur.push(urls[i]);
-              console.log(`  ↳ Appended URL (no more replace indices)`);
             }
           }
         } else if (
@@ -181,11 +143,9 @@ async function uploadForDoc(req, res) {
         ) {
           // Single replacement (legacy support)
           cur[parseInt(replaceIndex)] = urls[0];
-          console.log("  ↳ Replaced URL at index", parseInt(replaceIndex));
         } else {
           // Append all URLs
           cur.push(...urls);
-          console.log("  ↳ Pushed", urls.length, "URLs to array");
         }
         setNested(doc, field, cur);
       } else {
@@ -196,7 +156,7 @@ async function uploadForDoc(req, res) {
           });
         const arr = val;
         const el = arr.find(
-          (e) => String(e[filterKey]) === String(filterValue)
+          (e) => String(e[filterKey]) === String(filterValue),
         );
         if (!el)
           return res.status(404).json({ error: "Matching element not found" });
@@ -242,7 +202,6 @@ async function uploadForDoc(req, res) {
     }
 
     await doc.save();
-    console.log(" Document saved successfully:", { model, id, field, urls });
     return res.json({ success: true, urls, model, id, field });
   } catch (err) {
     console.error("generic upload error", err);
