@@ -33,6 +33,7 @@ app.use(
       "http://ayatrio-admin.s3-website.ap-south-1.amazonaws.com",
       "https://main.d2e7lk624os6uh.amplifyapp.com",
       "http://13.203.148.236:3000", // ← your current frontend IP
+      "https://furniture-frontend-next.vercel.app",
     ],
     methods: "GET,POST,PUT,DELETE,PATCH",
     credentials: true,
@@ -114,6 +115,7 @@ const io = socket(server, {
       "https://frontendtrail.ayatrio.com",
       "http://localhost:5173",
       "http://13.203.148.236:3000",
+      "https://furniture-frontend-next.vercel.app",
     ],
   },
 });
