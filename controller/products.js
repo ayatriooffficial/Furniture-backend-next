@@ -25,7 +25,6 @@ const safeJSONParse = (str) => {
 
 exports.createProduct = async (req, res) => {
   try {
-
     // Extract image URLs from request body
     const {
       imageUrls = [],
@@ -170,14 +169,32 @@ exports.createProduct = async (req, res) => {
     const validatedFeatureIds = Array.isArray(featureIds)
       ? featureIds
       : typeof featureIds === "string"
-      ? featureIds.split(",").filter((id) => id.trim())
-      : [];
+        ? featureIds.split(",").filter((id) => id.trim())
+        : [];
 
-    const validatedCoreValueIds = Array.isArray(coreValueIds)
-      ? coreValueIds
-      : typeof coreValueIds === "string"
-      ? coreValueIds.split(",").filter((id) => id.trim())
-      : [];
+    // Process coreValueIds - now expects an object { key: value }
+    let validatedCoreValueIds = {};
+    if (
+      coreValueIds &&
+      typeof coreValueIds === "object" &&
+      !Array.isArray(coreValueIds)
+    ) {
+      // New format: object with key-value pairs
+      validatedCoreValueIds = coreValueIds;
+    } else if (Array.isArray(coreValueIds)) {
+      // Backward compatibility: convert array to object with null values
+      validatedCoreValueIds = coreValueIds.reduce((acc, id) => {
+        acc[id] = null;
+        return acc;
+      }, {});
+    } else if (typeof coreValueIds === "string") {
+      // Handle comma-separated string (legacy support)
+      const ids = coreValueIds.split(",").filter((id) => id.trim());
+      validatedCoreValueIds = ids.reduce((acc, id) => {
+        acc[id] = null;
+        return acc;
+      }, {});
+    }
 
     // Process dimensions
     const structuredDimensions = dimensions?.map((dimension) => ({
@@ -229,7 +246,7 @@ exports.createProduct = async (req, res) => {
     }
 
     const subCategoryData = categoryData.subcategories.find(
-      (sub) => sub.name === subCategory
+      (sub) => sub.name === subCategory,
     );
 
     // Create product document
@@ -447,7 +464,7 @@ exports.fetchProductsByCategoryAndSubCategory = async (req, res) => {
     } catch (error) {
       console.error(
         "Error while fetching products by category and subCategory:",
-        error
+        error,
       );
       return res.status(500).json({
         error:
@@ -469,7 +486,7 @@ exports.fetchProductsByCategoryAndSubCategory = async (req, res) => {
   } catch (error) {
     console.error(
       "Error while fetching products by category and subCategory:",
-      error
+      error,
     );
     res.status(500).json({
       error:
@@ -608,7 +625,7 @@ exports.createReview = async (req, res) => {
       },
       {
         $push: { ratings: review },
-      }
+      },
     );
 
     if (!product) {
@@ -791,7 +808,7 @@ exports.updateDemandType = async (req, res) => {
     const updatedProduct = await productsDB.findOneAndUpdate(
       { _id: productId },
       { demandtype },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedProduct) {
@@ -821,7 +838,7 @@ exports.updateSpecialPrice = async (req, res) => {
     const updatedProduct = await productsDB.findOneAndUpdate(
       { _id: productId },
       { specialprice },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedProduct) {
@@ -848,7 +865,7 @@ exports.removeSpecialPrice = async (req, res) => {
     const updatedProduct = await productsDB.findOneAndUpdate(
       { _id: productId },
       { specialprice: null },
-      { new: true }
+      { new: true },
     );
     if (!updatedProduct) {
       return res.status(404).json({ error: "Product not found." });
@@ -1007,7 +1024,7 @@ exports.unlikeProduct = async (req, res) => {
       return res.status(400).json({ message: "Product not liked" });
     }
     user.likedProducts = user.likedProducts.filter(
-      (id) => id.toString() !== productId
+      (id) => id.toString() !== productId,
     );
     product.likes -= 1;
     await product.save();
@@ -1165,7 +1182,7 @@ exports.generateMaintenancePdf = async (req, res) => {
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader(
           "Content-Disposition",
-          "attachment; filename=product-details.pdf"
+          "attachment; filename=product-details.pdf",
         );
         res.send(pdfBuffer);
       })
@@ -1302,7 +1319,7 @@ exports.generateInstallationPdf = async (req, res) => {
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader(
           "Content-Disposition",
-          "attachment; filename=product-details.pdf"
+          "attachment; filename=product-details.pdf",
         );
         res.send(pdfBuffer);
       })

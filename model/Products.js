@@ -147,8 +147,9 @@ const productSchema = new mongoose.Schema({
   otherRoom: [String],
   productDescription: String,
   coreValueIds: {
-    type: [String],
-    default: [],
+    type: Map,
+    of: String,
+    default: {},
   },
   featureIds: {
     type: [String],
