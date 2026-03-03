@@ -75,6 +75,31 @@ exports.create = async (req, res) => {
         : features
       : [];
 
+    // Ensure each feature's cards array is properly parsed
+    // (FormData sends each card as a JSON-stringified string)
+    if (Array.isArray(parsedFeatures)) {
+      parsedFeatures = parsedFeatures.map((feature) => {
+        if (feature.cards) {
+          const cardsArray = Array.isArray(feature.cards)
+            ? feature.cards
+            : Object.values(feature.cards);
+          feature.cards = cardsArray.map((card) => {
+            if (typeof card === "string") {
+              try {
+                return JSON.parse(card);
+              } catch {
+                return { description: card };
+              }
+            }
+            return card;
+          });
+        } else {
+          feature.cards = [];
+        }
+        return feature;
+      });
+    }
+
     if (req.files && req.files.featuresIcons) {
       const iconsArray = Array.isArray(req.files.featuresIcons)
         ? req.files.featuresIcons

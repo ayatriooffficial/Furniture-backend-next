@@ -184,16 +184,22 @@ const roomSchema = new mongoose.Schema(
       {
         name: { type: String, required: true },
         description: { type: String, required: true },
-        tip:{
+        tip: {
           type: String,
         },
-        displayType: { 
-          type: String, 
+        displayType: {
+          type: String,
           required: true,
-          enum: ['card', 'cardSVG', 'comparison','tips'],
+          enum: ['card', 'cardSVG', 'comparison', 'tips'],
           default: 'card'
         },
-        icon: { type: String},
+        icon: { type: String },
+        cards: [
+          {
+            description: { type: String },
+            svgUrl: { type: String },
+          }
+        ],
       }
     ],
   },
