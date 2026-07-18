@@ -470,7 +470,9 @@ router
   .get("/distance", mapController.getDistance)
   // .get("/searchMapStore", mapController.searchMapStore)
   .delete("/mapPlaces/:mapId", mapController.deleteMapPlaces)
-  .get("/calculateShippingDetails", mapController.calculateShippingDetails);
+  .get("/calculateShippingDetails", mapController.calculateShippingDetails)
+  .get("/nearbyStores", mapController.getNearbyStores)
+  .get("/directions", mapController.getDirections);
 
 // trending products 📈
 router
