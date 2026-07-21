@@ -8,7 +8,6 @@ const purchasedb = require("../model/Purchase");
 exports.createGlobalOffer = async (req, res) => {
   try {
     const {
-      name,
       type,
       percentageOff,
       startDate,
@@ -19,7 +18,6 @@ exports.createGlobalOffer = async (req, res) => {
     } = req.body;
 
     const newOffer = new offerDb({
-      name,
       type,
       percentageOff,
       startDate,
@@ -389,6 +387,15 @@ exports.getAllCategoryByOffer = async (req, res) => {
     }
 
     res.status(200).send(category);
+  } catch (error) {
+    res.status(500).json({ error: error.message || "Internal server error" });
+  }
+};
+
+exports.getExternalOfferTypes = async (req, res) => {
+  try {
+    const enumValues = ExternalOffer.schema.path("type").enumValues;
+    res.status(200).json(enumValues);
   } catch (error) {
     res.status(500).json({ error: error.message || "Internal server error" });
   }

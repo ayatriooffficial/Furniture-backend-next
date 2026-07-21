@@ -40,5 +40,11 @@
     "request": "^2.88.2",
     "socket.io": "^4.7.5",
     "uuidv4": "^6.2.13"
+  },
+  "devDependencies": {
+    "convert": "^7.0.0",
+    "swagger-autogen": "^2.23.7",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   }
 }

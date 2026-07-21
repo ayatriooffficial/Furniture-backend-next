@@ -28,6 +28,10 @@ router.get(
   }),
   async (req, res) => {
     try {
+      // console.log({
+      //   NODE_ENV: process.env.NODE_ENV,
+      //   baseURL,
+      // });
       const { email, _id } = req.user;
       const path = req.query.state || `profile/${_id}`;
       const token = generateToken(req.user);

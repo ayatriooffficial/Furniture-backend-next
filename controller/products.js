@@ -232,7 +232,11 @@ exports.createProduct = async (req, res) => {
         };
         offerType = offerData.type;
         // console.log(`Applied offer: ${offerType}`, mappedDiscountPrice);
+      } else {
+        mappedDiscountPrice.price = discountedprice;
       }
+    } else if (discountedprice) {
+      mappedDiscountPrice.price = discountedprice;
     }
 
     // Validate category
@@ -454,13 +458,14 @@ exports.fetchProductsByCategoryAndSubCategory = async (req, res) => {
         .skip(skip)
         .limit(itemsPerPage);
 
-      const Totalproducts = await productsDB.find({
+      const totalCount = await productsDB.countDocuments({
         category: category,
         subcategory: subcategory,
+        isAccessories: false,
       });
       return res
         .status(200)
-        .json({ products: products, totalproducts: Totalproducts.length });
+        .json({ products: products, totalproducts: totalCount });
     } catch (error) {
       console.error(
         "Error while fetching products by category and subCategory:",
@@ -600,23 +605,46 @@ exports.createReview = async (req, res) => {
       dynamicRatings,
     } = req.body;
 
-    // const product = await productsDB.findById(productId).populate("ratings");
+    let dynamicRatingsArray = dynamicRatings;
+    if (!dynamicRatingsArray || !Array.isArray(dynamicRatingsArray)) {
+      dynamicRatingsArray = [];
+      for (const key in req.body) {
+        const match = key.match(/^dynamicRatings\[(\d+)\]\[(name|value)\]$/);
+        if (match) {
+          const index = parseInt(match[1], 10);
+          const field = match[2];
+          if (!dynamicRatingsArray[index]) {
+            dynamicRatingsArray[index] = {};
+          }
+          dynamicRatingsArray[index][field] = req.body[key];
+        }
+      }
+      dynamicRatingsArray = dynamicRatingsArray.filter(Boolean);
+    }
 
-    const review = new reviewDb({
+    const reviewData = {
       productId,
       name,
       userEmail,
       reviewId,
       rating,
       comment,
-      profilePic,
       images: imageUrls,
-      userId,
-    });
+    };
+
+    if (profilePic && profilePic !== "undefined" && profilePic !== "null") {
+      reviewData.profilePic = profilePic;
+    }
+
+    if (userId && userId !== "undefined" && userId !== "null") {
+      reviewData.userId = userId;
+    }
+
+    const review = new reviewDb(reviewData);
 
     // Only include dynamicRatings if it exists and has length > 0
-    if (dynamicRatings && dynamicRatings.length > 0) {
-      review.dynamicRatings = dynamicRatings;
+    if (dynamicRatingsArray && dynamicRatingsArray.length > 0) {
+      review.dynamicRatings = dynamicRatingsArray;
     }
 
     const product = await productsDB.findOneAndUpdate(
@@ -624,7 +652,7 @@ exports.createReview = async (req, res) => {
         _id: productId,
       },
       {
-        $push: { ratings: review },
+        $push: { ratings: review._id },
       },
     );
 
@@ -636,7 +664,7 @@ exports.createReview = async (req, res) => {
 
     res.status(201).send({ message: "Review Created", review: review });
   } catch (error) {
-    // console.log(error);
+    console.log(error);
     res.status(500).send({ message: "Error in creating review" });
   }
 };
