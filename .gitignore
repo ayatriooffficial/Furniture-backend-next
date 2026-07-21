@@ -6,3 +6,11 @@ key.json
 controller/key.json
 *.key
 *.json.private
+
+/config/swagger-output.json
+/config/swagger.js
+
+.vscode
+
+ayatrio_admin
+ayatrio_frontend
