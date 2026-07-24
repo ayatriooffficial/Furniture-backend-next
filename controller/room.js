@@ -7,15 +7,14 @@ exports.createRoom = async (req, res) => {
  
 
   try {
-     // Validate uploaded files
+    // Validate uploaded files
      if (!req.files || !Array.isArray(req.files)) {
       return res.status(400).send("No files uploaded.");
     }
     //   // Extract image and PDF URLs from req.files
     const imageUrls = req.files
       .filter((file) => file.fieldname === "image")
-      .map((file) => file.location);
-
+      .map((file) => file.path || file.location);
     if (!req.body) {
       return res.status(406).send("Please provide room data");
     }
