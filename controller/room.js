@@ -117,30 +117,49 @@ exports.getAllRooms = async (req, res) => {
 
 exports.getTabsRoom = async (req, res) => {
   try {
-    const category = await categoriesDB
+    const categories = await categoriesDB
       .find()
       .select("name subcategories")
       .sort({ popularity: -1 });
 
+      // console.log("These are categories: ",categories);
+
     let rooms = [];
 
-    if (category.length > 0) {
-      for (let i = 0; i < category.length; i++) {
-        const sub = category[i].subcategories.sort(
-          (a, b) => b.popularity - a.popularity
-        )[0];
+    if (categories && categories.length > 0) {
+      for (let i = 0; i < categories.length; i++) {
+        const cat = categories[i];
+        console.log("Subcategories are there: ",cat.subcategories);
+
+        // Check if subcategories exist and is not empty
+        if (!cat.subcategories || cat.subcategories.length === 0) {
+          continue; // Skip categories without subcategories
+        }
+
+        // Sort subcategories by popularity descending and pick the first one
+        const sortedSubs = cat.subcategories.sort(
+          (a, b) => (b.popularity || 0) - (a.popularity || 0)
+        );
+        const topSub = sortedSubs[0];
+
+        // Ensure we actually got a valid top subcategory name
+        if (!topSub || !topSub.name) {
+          continue;
+        }
+
         const product = await productsDB
           .findOne({
-            category: category[i].name,
-            subcategory: sub.name,
+            category: cat.name,
+            subcategory: topSub.name,
           })
           .select("productId")
           .sort({ popularity: -1 });
+
+        console.log("this is filtered product:",product);
           
-        if (product) {
-          //console.log(product.productId);
+        if (product && product.productId) {
           const room = await Room.find({ productId: product.productId });
-          if (room.length > 0) {
+          if (room && room.length > 0) {
             rooms = [...rooms, ...room];
           }
         }
