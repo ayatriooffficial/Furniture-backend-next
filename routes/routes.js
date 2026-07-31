@@ -453,6 +453,9 @@ router
     "/removeSpecialPrice/:productId",
     productController.removeSpecialPrice,
   );
+// AI Chatbot product search
+router.get("/ai/products/search", productController.aiProductSearch);
+
 // Review 🌟
 router
   .post(

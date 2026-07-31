@@ -1361,6 +1361,61 @@ exports.generateInstallationPdf = async (req, res) => {
   }
 };
 
+exports.aiProductSearch = async (req, res) => {
+  try {
+    const { q, sort, category, limit } = req.query;
+
+    let query = productsDB.find({ isAccessories: false });
+
+    if (q) {
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      query = query.find({
+        $or: [
+          { productTitle: { $regex: new RegExp(escaped, "i") } },
+          { category: { $regex: new RegExp(escaped, "i") } },
+          { subcategory: { $regex: new RegExp(escaped, "i") } },
+          { colors: { $regex: new RegExp(escaped, "i") } },
+          { material: { $regex: new RegExp(escaped, "i") } },
+          { shortDescription: { $regex: new RegExp(escaped, "i") } },
+        ],
+      });
+    }
+
+    if (category) {
+      query = query.find({ category: { $regex: new RegExp(category, "i") } });
+    }
+
+    if (sort === "price_asc") query = query.sort({ perUnitPrice: 1 });
+    else if (sort === "price_desc") query = query.sort({ perUnitPrice: -1 });
+    else if (sort === "popularity") query = query.sort({ popularity: -1 });
+
+    const maxLimit = Math.min(parseInt(limit) || 5, 10);
+    const docs = await query.limit(maxLimit).select(
+      "productTitle category subcategory perUnitPrice discountedprice popularity offer colors images shortDescription productId availability",
+    );
+
+    const results = docs.map((p) => ({
+      name: p.productTitle,
+      category: p.category,
+      subcategory: p.subcategory,
+      price: p.perUnitPrice,
+      discountedPrice: p.discountedprice?.price || null,
+      offer: p.offer,
+      popularity: p.popularity,
+      colors: p.colors,
+      image: p.images?.[0] || null,
+      description: p.shortDescription,
+      productId: p.productId,
+      inStock: p.availability === "in stock",
+    }));
+
+    res.status(200).json({ products: results, count: results.length });
+  } catch (error) {
+    console.error("AI Product Search Error:", error.message);
+    res.status(500).json({ error: "Search failed", message: error.message });
+  }
+};
+
 exports.fetchAccessoriesByCategory = async (req, res) => {
   try {
     const { category } = req.params;

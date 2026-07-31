@@ -46,5 +46,8 @@
     "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1"
+  },
+  "overrides": {
+    "puppeteer": "$puppeteer"
   }
 }
