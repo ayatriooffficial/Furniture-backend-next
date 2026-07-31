@@ -10,9 +10,9 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -20,11 +20,16 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 // ─── Helper: Format duration from seconds (int) to readable string ─────────────
 function formatDuration(seconds) {
   const s = typeof seconds === "string" ? parseInt(seconds, 10) : seconds;
-  if (isNaN(s) || s < 0) return "Unknown";
+
+  if (!Number.isFinite(s) || s < 0) return "Unknown";
+
   const hours = Math.floor(s / 3600);
   const minutes = Math.floor((s % 3600) / 60);
+  const secs = s % 60;
+
   if (hours > 0) return `${hours} hr ${minutes} min`;
-  return `${minutes} min`;
+  if (minutes > 0) return `${minutes} min`;
+  return `${secs} sec`;
 }
 
 // ─── Helper: Normalize travelMode to Routes API v2 enum ───────────────────────
@@ -106,6 +111,8 @@ const createMapPlaces = async (req, res) => {
     if (!name || !address || !phone || !pincode) {
       return res.status(400).json({ message: "name, address, phone, and pincode are required." });
     }
+
+    
     if (
       !geo_location ||
       geo_location.latitude == null ||
@@ -113,11 +120,28 @@ const createMapPlaces = async (req, res) => {
     ) {
       return res.status(400).json({ message: "geo_location with latitude and longitude is required." });
     }
-    if (
-      isNaN(parseFloat(geo_location.latitude)) ||
-      isNaN(parseFloat(geo_location.longitude))
-    ) {
-      return res.status(400).json({ message: "geo_location.latitude and geo_location.longitude must be valid numbers." });
+    
+    const latitude = Number(geo_location.latitude);
+    const longitude = Number(geo_location.longitude);
+    
+    // Validate numeric values
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return res.status(400).json({
+        message:
+          "geo_location.latitude and geo_location.longitude must be valid numbers.",
+      });
+    }
+
+    if (latitude < -90 || latitude > 90) {
+      return res.status(400).json({
+        message: "Latitude must be between -90 and 90."
+      });
+    }
+
+    if (longitude < -180 || longitude > 180) {
+      return res.status(400).json({
+        message: "Longitude must be between -180 and 180."
+      });
     }
 
     const newMapDetail = new MapPlacesModel({
@@ -126,8 +150,8 @@ const createMapPlaces = async (req, res) => {
       phone,
       pincode,
       geo_location: {
-        latitude: parseFloat(geo_location.latitude),
-        longitude: parseFloat(geo_location.longitude),
+        latitude: latitude,
+        longitude: longitude,
       },
       images: images || [],
       profileImg,
@@ -339,10 +363,27 @@ const getNearbyStores = async (req, res) => {
     const maxDistanceKm = parseInt(maxDistance) / 1000;
     const storeLimit = Math.min(parseInt(limit) || 3, 20); // cap at 20
 
-    const allStores = await MapPlacesModel.find({});
+    // --- OPTIMIZATION: Bounding Box Query ---
+    // 1 degree of latitude is roughly 111 km.
+    // We multiply by 1.5 to match generous search radius logic.
+    const searchRadiusKm = maxDistanceKm * 1.5;
+    const latDelta = searchRadiusKm / 111;
+    const lngDelta = searchRadiusKm / (111 * Math.cos(userLat * (Math.PI / 180)));
+
+    const minLat = userLat - latDelta;
+    const maxLat = userLat + latDelta;
+    const minLng = userLng - lngDelta;
+    const maxLng = userLng + lngDelta;
+
+    // Only fetch stores within this square box!
+    const allStores = await MapPlacesModel.find({
+      "geo_location.latitude": { $gte: minLat, $lte: maxLat },
+      "geo_location.longitude": { $gte: minLng, $lte: maxLng }
+    });
+    
     if (!allStores || allStores.length === 0) {
       return res.status(404).json({
-        message: "No stores found in the database. Please add stores first.",
+        message: "No stores found in the database near this location.",
       });
     }
 
@@ -387,18 +428,58 @@ const getNearbyStores = async (req, res) => {
       });
     }
 
-    // Filter by radius and sort by distance ascending
-    const nearbyStores = storesWithDistance
+    // Pre-filter using straight-line distance to get candidates within a generous radius (e.g., 1.5x to account for winding roads)
+    const candidateStores = storesWithDistance
+      .filter((store) => store.distance.kilometers <= maxDistanceKm * 1.5)
+      .sort((a, b) => a.distance.meters - b.distance.meters);
+
+    if (candidateStores.length === 0) {
+      return res.status(404).json({
+        message: `No Ayatrio stores found within ${maxDistanceKm} km of your location. Try increasing the search radius.`,
+        totalStores: storesWithDistance.length,
+        closestStore: storesWithDistance.sort((a, b) => a.distance.meters - b.distance.meters)[0]?.name,
+        closestDistance: storesWithDistance.sort((a, b) => a.distance.meters - b.distance.meters)[0]?.distance.kilometers,
+      });
+    }
+
+    // Get exact driving distances for the top candidates
+    // We cap to 25 to respect Google Maps Distance Matrix limits in a single request
+    const exactCandidates = candidateStores.slice(0, 25);
+    const destinations = exactCandidates.map(s => `${s.geo_location.latitude},${s.geo_location.longitude}`).join('|');
+
+    if (process.env.GOOGLE_MAPS_API_KEY) {
+      try {
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${userLat},${userLng}&destinations=${encodeURIComponent(destinations)}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+        const response = await axios.get(url);
+
+        if (response.data.status === "OK") {
+          const elements = response.data.rows[0]?.elements || [];
+          exactCandidates.forEach((store, index) => {
+            const element = elements[index];
+            if (element && element.status === "OK") {
+              store.distance.meters = element.distance.value;
+              store.distance.kilometers = parseFloat((element.distance.value / 1000).toFixed(2));
+              store.distance.exactRoute = true; // Indicates we are using exact road distance
+            }
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching exact driving distance for nearby stores:", err.message);
+      }
+    }
+
+    // Now filter exactly and sort by the real driving distance
+    const nearbyStores = exactCandidates
       .filter((store) => store.distance.kilometers <= maxDistanceKm)
       .sort((a, b) => a.distance.meters - b.distance.meters)
       .slice(0, storeLimit);
 
     if (nearbyStores.length === 0) {
       return res.status(404).json({
-        message: `No Ayatrio stores found within ${maxDistanceKm} km of your location. Try increasing the search radius.`,
+        message: `No Ayatrio stores found within exact driving distance of ${maxDistanceKm} km. Try increasing the search radius.`,
         totalStores: storesWithDistance.length,
-        closestStore: storesWithDistance.sort((a, b) => a.distance.meters - b.distance.meters)[0]?.name,
-        closestDistance: storesWithDistance.sort((a, b) => a.distance.meters - b.distance.meters)[0]?.distance.kilometers,
+        closestStore: exactCandidates.sort((a, b) => a.distance.meters - b.distance.meters)[0]?.name,
+        closestDistance: exactCandidates.sort((a, b) => a.distance.meters - b.distance.meters)[0]?.distance.kilometers,
       });
     }
 
