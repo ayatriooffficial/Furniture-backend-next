@@ -129,7 +129,7 @@ exports.getTabsRoom = async (req, res) => {
     if (categories && categories.length > 0) {
       for (let i = 0; i < categories.length; i++) {
         const cat = categories[i];
-        console.log("Subcategories are there: ",cat.subcategories);
+        // console.log("Subcategories are there: ",cat.subcategories);
 
         // Check if subcategories exist and is not empty
         if (!cat.subcategories || cat.subcategories.length === 0) {
@@ -155,7 +155,7 @@ exports.getTabsRoom = async (req, res) => {
           .select("productId")
           .sort({ popularity: -1 });
 
-        console.log("this is filtered product:",product);
+        // console.log("this is filtered product:",product);
           
         if (product && product.productId) {
           const room = await Room.find({ productId: product.productId });
