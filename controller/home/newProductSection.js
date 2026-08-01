@@ -43,8 +43,7 @@ exports.createProductSection = async (req, res) => {
 
       const imageUrl = req.files
         .filter((file) => file.fieldname === "image")
-        .map((file) => file.location);
-
+        .map((file) => file.path || file.location);
 
       const imageInfo = new newProductSectionDB({
         items: [
@@ -67,7 +66,7 @@ exports.createProductSection = async (req, res) => {
       const data = req.body;
       const imageUrls = req.files
         .filter((file) => file.fieldname === "image")
-        .map((file) => file.location);
+        .map((file) => file.path || file.location);
       const items = [];
       for (let i = 0; i < imageUrls.length; i++) {
         const heading = data[`heading${i}`];
