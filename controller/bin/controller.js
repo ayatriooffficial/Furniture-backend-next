@@ -35,6 +35,10 @@ const parseJsonIfString = (value) => {
   }
 };
 
+// Module-level sanitizer so all handlers can use it
+const sanitizeString = (value, maxLength = 100) =>
+  (value?.toString() || "").substring(0, maxLength).trim();
+
 function mapTextAndHyperlink(inputArray) {
   return inputArray.map((item) => {
     if (item.selectedtext && item.hyperlink) {
@@ -98,7 +102,20 @@ exports.createCategory = async (req, res) => {
     const sanitizeString = (value, maxLength = 100) =>
       (value?.toString() || "").substring(0, maxLength).trim();
 
-    const {
+    // Helper function to safely parse JSON strings
+    const parseJSON = (value, defaultValue = []) => {
+      if (typeof value === "string") {
+        try {
+          return JSON.parse(value);
+        } catch (e) {
+          console.error("JSON Parse Error:", e);
+          return defaultValue;
+        }
+      }
+      return value || defaultValue;
+    };
+
+    let {
       name,
       type,
       description = "",
@@ -117,6 +134,25 @@ exports.createCategory = async (req, res) => {
       firstGrid = {},
       secondGrid = {},
     } = req.body;
+
+    // Parse stringified JSON arrays from FormData
+    features = parseJSON(features, []);
+    subcategories = parseJSON(subcategories, []);
+    maintenanceDetails = parseJSON(maintenanceDetails, []);
+    installationDetails = parseJSON(installationDetails, []);
+    faq = parseJSON(faq, []);
+    availableColors = parseJSON(availableColors, []);
+    availableServices = parseJSON(availableServices, []);
+    availableRatingTypes = parseJSON(availableRatingTypes, []);
+    firstGrid = parseJSON(firstGrid, {});
+    secondGrid = parseJSON(secondGrid, {});
+
+    const getUploadedFileUrl = (file) =>
+      file?.path || file?.secure_url || file?.url || file?.location || "";
+
+    const uploadedSubCategoryImages = Array.isArray(req.files?.subCategoriesImage)
+      ? req.files.subCategoriesImage.map(getUploadedFileUrl)
+      : [];
 
     // 5. Validate required fields with better error messages
     if (!sanitizeString(name) || !sanitizeString(type)) {
@@ -164,13 +200,13 @@ exports.createCategory = async (req, res) => {
       Array.isArray(subcategories) ? subcategories : []
     )
       .slice(0, 20)
-      .map((sub) => ({
+      .map((sub, index) => ({
         name: sanitizeString(sub?.name, 50) || "Unnamed Subcategory",
         description: sanitizeString(sub?.description, 500),
         metadata: {
           title: sanitizeString(sub?.metadata?.title, 100),
         },
-        img: sanitizeString(sub?.img, 500),
+        img: sanitizeString(uploadedSubCategoryImages[index] || sub?.img, 500),
         isAccessories: !!sub?.isAccessories,
         showInSubCategory: sub?.showInSubCategory !== false,
         products: (Array.isArray(sub?.products) ? sub.products : [])
@@ -1252,17 +1288,16 @@ exports.CreateSubCategory = async (req, res) => {
     }
 
     const newSubcategory = {
-      name: name.trim(),
-      img: imageUrl,
-      faq: faq || [],
-      description: description?.trim() || "",
-      h1title: h1title?.trim() || "",
+      name: sanitizeString(name, 50) || "",
+      img: sanitizeString(imageUrl, 50000),
+      faq: Array.isArray(faq) ? faq : [],
+      description: sanitizeString(description, 500),
+      h1title: sanitizeString(h1title, 100),
       pdesc: pdesc || [],
-      metadata: { title: metadataTitle?.trim() || "" },
-      isAccessories: isAccessories || false,
-      showInSubCategory: showInSubCategory || true,
-      features: features || [],
-      _id: new mongoose.Types.ObjectId(),
+      metadata: { title: sanitizeString(metadataTitle, 100) || "" },
+      isAccessories: !!isAccessories,
+      showInSubCategory: showInSubCategory !== false,
+      features: Array.isArray(features) ? features : [],
     };
 
     category.subcategories.push(newSubcategory);
