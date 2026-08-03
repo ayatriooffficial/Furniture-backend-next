@@ -183,7 +183,8 @@ const roomSchema = new mongoose.Schema(
     features: [
       {
         name: { type: String, required: true },
-        description: { type: String, required: true },
+        description: { type: String },
+        subHeading: { type: String }, // NEW: 2nd heading under the feature name
         tip: {
           type: String,
         },
@@ -198,6 +199,33 @@ const roomSchema = new mongoose.Schema(
           {
             description: { type: String },
             svgUrl: { type: String },
+            heading: { type: String }, // NEW: card heading
+            cardType: { // NEW: per-card type — overrides feature.displayType for this card
+              type: String,
+              enum: ['card', 'cardSVG', 'comparison'],
+              default: 'card',
+            },
+            leftHeading: { type: String }, // NEW: comparison left column heading
+            rightHeading: { type: String }, // NEW: comparison right column heading
+            columns: [ // NEW: comparison option columns (e.g. ["Vinyl Floor", "Laminated Floor"])
+              { name: { type: String } },
+            ],
+            rows: [ // NEW: comparison rows (e.g. { label: "Price", values: ["500-800", "1000-1500"] })
+              {
+                label: { type: String },
+                values: [{ type: String }],
+              }
+            ],
+            points: [ // NEW: bullet list (left column for comparison)
+              {
+                text: { type: String },
+              }
+            ],
+            pointsRight: [ // NEW: right column for comparison
+              {
+                text: { type: String },
+              }
+            ],
           }
         ],
       }
