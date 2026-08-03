@@ -425,9 +425,12 @@ router
     "/fetchProductsByCategory/:category",
     productController.fetchProductsByCategory,
   )
-  .get(
-    "/productByCategoryAndSubCategory",
+  .get("/productByCategoryAndSubCategory",
     productController.fetchProductsByCategoryAndSubCategory,
+  )
+  .get(
+    "/productCategorySubcategoryCounts",
+    productController.getProductCategorySubcategoryCounts,
   )
   .patch("/updateDemandType", productController.updateDemandType)
   .patch("/updateSpecialPrice", productController.updateSpecialPrice)

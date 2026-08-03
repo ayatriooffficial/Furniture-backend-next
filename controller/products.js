@@ -413,6 +413,39 @@ exports.fetchAllProducts = async (req, res) => {
   }
 };
 
+// GET: api/productCategorySubcategoryCounts
+// Returns distinct { category, subcategory } pairs with product counts,
+// so the admin room form can offer only valid slider options.
+exports.getProductCategorySubcategoryCounts = async (req, res) => {
+  try {
+    const agg = await productsDB.aggregate([
+      {
+        $group: {
+          _id: {
+            category: { $ifNull: ["$category", ""] },
+            subcategory: { $ifNull: ["$subcategory", ""] },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.category": 1, "_id.subcategory": 1 } },
+    ]);
+
+    const data = agg.map((item) => ({
+      category: item._id.category,
+      subcategory: item._id.subcategory,
+      count: item.count,
+    }));
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Error fetching category/subcategory counts:", error);
+    res
+      .status(500)
+      .json({ error: error.message || "Error fetching product counts" });
+  }
+};
+
 exports.fetchProductByProductId = async (req, res) => {
   try {
     const { productId } = req.params;
@@ -590,7 +623,7 @@ exports.createReview = async (req, res) => {
   try {
     const imageUrls = req.files
       ?.filter((file) => file.fieldname === "image")
-      .map((file) => file.location);
+      .map((file) => file.path || file.location || file.secure_url || file.url);
 
     const reviewId = uuidv4();
 
@@ -673,7 +706,7 @@ exports.createSpecialReview = async (req, res) => {
   try {
     const imageUrls = req.files
       .filter((file) => file.fieldname === "image")
-      .map((file) => file.location);
+      .map((file) => file.path || file.location || file.secure_url || file.url);
     const reviewId = uuidv4();
     const { name, instagramUrl, comment } = req.body;
     const specialReview = new SpecialReview({

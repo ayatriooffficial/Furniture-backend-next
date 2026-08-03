@@ -209,6 +209,12 @@ exports.create = async (req, res) => {
             category: slider.subType,
             subcategory: slider.subType2,
           }).select("_id");
+          // Fall back to category-only if the exact subcategory combo has no products
+          if (sliderProducts.length === 0) {
+            sliderProducts = await Product.find({
+              category: slider.subType,
+            }).select("_id");
+          }
         } else {
           sliderProducts = await Product.find({
             category: slider.subType,
@@ -227,6 +233,26 @@ exports.create = async (req, res) => {
     const thirdSliderProducts = await mapSliderProducts(thirdSlider);
     const forthSliderProducts = await mapSliderProducts(forthSlider);
     const fifthSliderProducts = await mapSliderProducts(fifthSlider);
+
+    // Reject sliders that would save empty — surface the issue to the admin instead of silently creating blank sections
+    const sliderResults = [
+      ["firstSlider", firstSlider, firstSliderProducts],
+      ["secondSlider", secondSlider, secondSliderProducts],
+      ["thirdSlider", thirdSlider, thirdSliderProducts],
+      ["forthSlider", forthSlider, forthSliderProducts],
+      ["fifthSlider", fifthSlider, fifthSliderProducts],
+    ];
+    for (const [sliderName, slider, products] of sliderResults) {
+      if (!slider || !slider.type) continue;
+      if (products.length === 0) {
+        const detail = `${slider.type}${
+          slider.subType ? `: ${slider.subType}` : ""
+        }${slider.subType2 ? ` / ${slider.subType2}` : ""}`;
+        return res.status(400).json({
+          message: `No products found for slider "${sliderName}" (${detail}). Choose a different subtype or leave SubType2 empty so it falls back to the full category.`,
+        });
+      }
+    }
 
     const newRoom = new RoomMain({
       roomType,
@@ -292,7 +318,11 @@ exports.create = async (req, res) => {
 exports.getRoom = async (req, res) => {
   const { roomType } = req.query;
   try {
-    const room = await RoomMain.findOne({ roomType })
+    // Match roomType ignoring hyphen/space differences (e.g. "test-room-2" == "test room 2")
+    const match = roomType
+      ? { roomType: { $regex: new RegExp(`^${roomType.replace(/[-\s]+/g, "[-\\s]*")}$`, "i") } }
+      : {};
+    const room = await RoomMain.findOne(match)
       .populate("mainImage")
       .populate("fiveGrid.fiveGridRooms")
       .populate("twoGrid.twoGridRooms")

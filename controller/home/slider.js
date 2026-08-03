@@ -3,8 +3,16 @@ const SliderDB = require("../../model/Slider");
 // POST:  '/api/createImgCricle' -  homepageRoutes.js
 exports.createImgCircle = async (req, res) => {
   try {
-    const desktopImageUrl = req.files.desktopImgSrc[0].location;
-    const mobileImageUrl = req.files.mobileImgSrc[0].location;
+    const desktopImageUrl =
+      req.files.desktopImgSrc[0].path ||
+      req.files.desktopImgSrc[0].location ||
+      req.files.desktopImgSrc[0].secure_url ||
+      req.files.desktopImgSrc[0].url;
+    const mobileImageUrl =
+      req.files.mobileImgSrc[0].path ||
+      req.files.mobileImgSrc[0].location ||
+      req.files.mobileImgSrc[0].secure_url ||
+      req.files.mobileImgSrc[0].url;
     const { imgTitle, ...circles } = req.body;
     let url;
     if (req.body.category && req.body.demandtype) {

@@ -92,7 +92,9 @@ exports.getRooms = async (req, res) => {
   try {
     let rooms;
     if (roomType) {
-      rooms = await Room.find({ roomType });
+      // Match roomType ignoring hyphen/space differences
+      const match = { roomType: { $regex: new RegExp(`^${roomType.replace(/[-\s]+/g, "[-\\s]*")}$`, "i") } };
+      rooms = await Room.find(match);
     } else {
       rooms = await Room.find();
     }
@@ -182,7 +184,9 @@ exports.getRoomByQuery = async (req, res) => {
         productCategory: { $regex: new RegExp(category, "i") },
       });
     } else if (roomType) {
-      room = await Room.findOne({ roomType });
+      room = await Room.findOne({
+        roomType: { $regex: new RegExp(`^${roomType.replace(/[-\s]+/g, "[-\\s]*")}$`, "i") },
+      });
       return res.status(200).json(room);
     }
     if (!room) room = await Room.findOne();

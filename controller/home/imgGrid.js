@@ -5,7 +5,7 @@ exports.createImgGrid = async (req, res) => {
     try {
         const imageUrl = req.files
             .filter((file) => file.fieldname === "image")
-            .map((file) => file.location);
+            .map((file) => file.path || file.location || file.secure_url || file.url);
 
         const { category, ...circles } = req.body;
 

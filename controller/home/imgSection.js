@@ -6,7 +6,7 @@ exports.createImgSection = async (req, res) => {
   try {
     const imageUrl = req.files
       .filter((file) => file.fieldname === "image")
-      .map((file) => file.location);
+      .map((file) => file.path || file.location || file.secure_url || file.url);
 
     const { text } = req.body;
 
@@ -63,8 +63,16 @@ exports.deleteImgSection = async (req, res) => {
 // POST: '/api/createPosterSection'  - homepageRoutes.js
 exports.createPosterSection = async (req, res) => {
   try {
-    const desktopImageUrl = req.files.desktopImgSrc[0].location;
-    const mobileImageUrl = req.files.mobileImgSrc[0].location;
+    const desktopImageUrl =
+      req.files.desktopImgSrc[0].path ||
+      req.files.desktopImgSrc[0].location ||
+      req.files.desktopImgSrc[0].secure_url ||
+      req.files.desktopImgSrc[0].url;
+    const mobileImageUrl =
+      req.files.mobileImgSrc[0].path ||
+      req.files.mobileImgSrc[0].location ||
+      req.files.mobileImgSrc[0].secure_url ||
+      req.files.mobileImgSrc[0].url;
     const { text, link } = req.body;
 
     const posterInfo = new posterSchemaDB({

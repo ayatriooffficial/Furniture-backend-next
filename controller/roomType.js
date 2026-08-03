@@ -14,7 +14,7 @@ exports.createRoomType = async (req, res) => {
   try {
     const imageUrls = req.files
       .filter((file) => file.fieldname === "image")
-      .map((file) => file.location);
+      .map((file) => file.path || file.location || file.secure_url || file.url);
     const { roomType } = req.body;
 
     if (!roomType) {

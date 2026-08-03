@@ -1243,7 +1243,8 @@ exports.CreateSubCategory = async (req, res) => {
     if (!image || image.length === 0) {
       return res.status(400).json({ message: "Image is required" });
     }
-    const imageUrl = image[0].location;
+    const imageUrl =
+      image[0].path || image[0].location || image[0].secure_url || image[0].url;
 
     const category = await categoriesDB.findById(categoryId);
     if (!category) {
@@ -1475,7 +1476,9 @@ exports.updateCategoryFirstGrid = async (req, res) => {
       title: firstGrid.title || null,
       description: firstGrid.description || null,
       link: firstGrid.link || null,
-      image: firstImage ? firstImage[0].location : null,
+      image: firstImage
+        ? firstImage[0].path || firstImage[0].location || firstImage[0].secure_url || firstImage[0].url
+        : null,
     };
     const category = await categoriesDB.findByIdAndUpdate(
       categoryId,
@@ -1507,7 +1510,9 @@ exports.updateCategorySecondGrid = async (req, res) => {
       title: secondGrid.title || null,
       description: secondGrid.description || null,
       link: secondGrid.link || null,
-      image: secondImage ? secondImage[0].location : null,
+      image: secondImage
+        ? secondImage[0].path || secondImage[0].location || secondImage[0].secure_url || secondImage[0].url
+        : null,
     };
     const category = await categoriesDB.findByIdAndUpdate(
       categoryId,

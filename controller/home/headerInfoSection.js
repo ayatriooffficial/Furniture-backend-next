@@ -4,7 +4,7 @@ const HeaderInfoDB = require("../../model/Header");
 exports.createHeaderInfoSection = async (req, res) => {
   const imageUrls = req.files
     .filter((file) => file.fieldname === "icon")
-    .map((file) => file.location);
+    .map((file) => file.path || file.location || file.secure_url || file.url);
   const { title, description, link } = req.body;
 
   try {

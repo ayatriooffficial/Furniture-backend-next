@@ -6,7 +6,7 @@ exports.createImgChanger = async (req, res) => {
     try {
         const imageUrl = req.files
             .filter((file) => file.fieldname === "image")
-            .map((file) => file.location);
+            .map((file) => file.path || file.location || file.secure_url || file.url);
 
         const { desc, title } = req.body;
         // console.log(req.body)
