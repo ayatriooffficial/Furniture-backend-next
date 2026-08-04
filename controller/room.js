@@ -120,21 +120,150 @@ exports.getAllRooms = async (req, res) => {
 
 exports.getTabsRoom = async (req, res) => {
   try {
-    const roomTypes = await RoomTypeDB.find({});
+    const MAX_ROOMS_PER_TYPE = 8;
+    const MAX_PRODUCTS_PER_SUBCATEGORY = 15; // cap before fetching rooms
 
-    const rooms = await Promise.all(
-      roomTypes.map(async (type) => {
-        return await Room.find({
-          roomType: type.roomType,
-        }).limit(3);
+    // ---------- Step 1: Categories -> sorted subcategories ----------
+    const categories = await categoriesDB
+      .find({})
+      .select("name subcategories")
+      .lean();
+
+    const subcategories = [];
+    for (const category of categories) {
+      if (!category.subcategories?.length) continue;
+      const sortedSubs = [...category.subcategories].sort(
+        (a, b) => (b.popularity || 0) - (a.popularity || 0)
+      );
+      for (const sub of sortedSubs) {
+        subcategories.push({
+          category: category.name,
+          subcategory: sub.name,
+          popularity: sub.popularity || 0,
+        });
+      }
+    }
+    subcategories.sort((a, b) => b.popularity - a.popularity);
+
+    // ---------- Step 2: Fetch products, then cap per subcategory ----------
+    const products = await productsDB
+      .find({
+        $or: subcategories.map((sub) => ({
+          category: sub.category,
+          subcategory: sub.subcategory,
+        })),
       })
-    );
+      .select("productId category subcategory popularity")
+      .sort({ popularity: -1 })
+      .lean();
 
-    // Flatten the nested arrays
-    const result = rooms.flat();
+    if (!products.length) return res.status(200).json([]);
 
-    return res.status(200).json(result);
+    const productMap = new Map();
+    for (const product of products) {
+      const key = `${product.category}__${product.subcategory}`;
+      if (!productMap.has(key)) productMap.set(key, []);
+      const arr = productMap.get(key);
+      // cap here — products already sorted by popularity
+      if (arr.length < MAX_PRODUCTS_PER_SUBCATEGORY) arr.push(product);
+    }
+
+    const cappedProductIds = [];
+    for (const arr of productMap.values()) {
+      for (const p of arr) cappedProductIds.push(p.productId);
+    }
+
+    // ---------- Step 3: Fetch rooms only for the capped product set ----------
+    const rooms = await Room.find({
+      productId: { $in: cappedProductIds },
+    }).lean();
+
+    const roomMap = new Map();
+    for (const room of rooms) {
+      if (!roomMap.has(room.productId)) roomMap.set(room.productId, []);
+      roomMap.get(room.productId).push(room);
+    }
+
+    // ---------- Step 4: Deduped queue per subcategory ----------
+    const subcategoryRoomQueues = new Map();
+    for (const sub of subcategories) {
+      const key = `${sub.category}__${sub.subcategory}`;
+      const subProducts = productMap.get(key);
+      if (!subProducts?.length) continue;
+
+      const queue = [];
+      const seen = new Set();
+      for (const product of subProducts) {
+        const matchedRooms = roomMap.get(product.productId);
+        if (!matchedRooms?.length) continue;
+        for (const room of matchedRooms) {
+          const id = String(room._id);
+          if (seen.has(id)) continue;
+          seen.add(id);
+          queue.push(room);
+        }
+      }
+      if (queue.length) subcategoryRoomQueues.set(key, queue);
+    }
+
+    // ---------- Step 5: Bucket by roomType ----------
+    const roomTypeBuckets = new Map();
+    for (const sub of subcategories) {
+      const key = `${sub.category}__${sub.subcategory}`;
+      const queue = subcategoryRoomQueues.get(key);
+      if (!queue?.length) continue;
+
+      for (const room of queue) {
+        const roomType = room.roomType || "Other";
+        if (!roomTypeBuckets.has(roomType)) roomTypeBuckets.set(roomType, new Map());
+        const subMap = roomTypeBuckets.get(roomType);
+        if (!subMap.has(key)) subMap.set(key, []);
+        subMap.get(key).push(room);
+      }
+    }
+
+    // ---------- Step 6: Round-robin with index cursors (no shift) ----------
+    const finalRooms = [];
+    const addedRoomIds = new Set();
+
+    for (const [, subMap] of roomTypeBuckets.entries()) {
+      const orderedSubKeys = subcategories
+        .map((sub) => `${sub.category}__${sub.subcategory}`)
+        .filter((key) => subMap.has(key));
+
+      // cursor per subcategory queue instead of mutating with shift()
+      const cursors = new Map(orderedSubKeys.map((k) => [k, 0]));
+
+      let selectedCount = 0;
+      let progressed = true;
+
+      while (selectedCount < MAX_ROOMS_PER_TYPE && progressed) {
+        progressed = false;
+
+        for (const key of orderedSubKeys) {
+          if (selectedCount >= MAX_ROOMS_PER_TYPE) break;
+
+          const queue = subMap.get(key);
+          let idx = cursors.get(key);
+          if (idx >= queue.length) continue;
+
+          const room = queue[idx];
+          cursors.set(key, idx + 1);
+          progressed = true;
+
+          const id = String(room._id);
+          if (addedRoomIds.has(id)) continue;
+
+          addedRoomIds.add(id);
+          finalRooms.push(room);
+          selectedCount++;
+        }
+      }
+    }
+
+    return res.status(200).json(finalRooms);
   } catch (error) {
+    console.error(error);
     return res.status(500).json({
       err: error.message || "Error while fetching rooms!",
     });
