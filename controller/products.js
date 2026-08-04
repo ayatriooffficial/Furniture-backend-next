@@ -79,6 +79,7 @@ exports.createProduct = async (req, res) => {
       offer,
       urgency,
       faqs,
+      structuredFeatures,
     } = req.body;
 
     // console.log('Important Product Fields:', JSON.stringify({
@@ -291,6 +292,7 @@ exports.createProduct = async (req, res) => {
       urgency,
       externalOffers: mappedExternalOffers,
       faqs: faqs || [],
+      structuredFeatures: structuredFeatures || [],
     });
 
     console.log("✅ BEFORE SAVING TO DB:");

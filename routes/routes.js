@@ -203,6 +203,8 @@ router.post(
 //oof
 
 router.post("/addCategoryFeatures/:categoryId", controller.addCategoryFeatures);
+router.post("/addCategoryStructuredFeatures/:categoryId", controller.addCategoryStructuredFeatures);
+router.post("/addSubCategoryStructuredFeatures/:categoryId/subCategory/:subCategoryId", controller.addSubCategoryStructuredFeatures);
 
 router.delete(
   "/deleteCategoryFeatures/:categoryId/:featureId",

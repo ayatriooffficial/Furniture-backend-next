@@ -445,6 +445,55 @@ exports.addCategoryFeatures = async (req, res) => {
   }
 };
 
+// Save structured (JSON, non-HTML) feature cards for a category
+exports.addCategoryStructuredFeatures = async (req, res) => {
+  try {
+    const { categoryId, structuredFeatures } = req.body;
+    if (!categoryId || !Array.isArray(structuredFeatures)) {
+      return res.status(400).json({ error: "categoryId and structuredFeatures[] are required." });
+    }
+    const category = await categoriesDB.findById(categoryId);
+    if (!category) return res.status(404).json({ error: "Category not found." });
+
+    category.structuredFeatures = structuredFeatures;
+    const savedCategory = await category.save();
+
+    res.status(200).json({
+      message: "Structured features saved successfully.",
+      structuredFeatures: savedCategory.structuredFeatures,
+    });
+  } catch (error) {
+    console.error("Error saving structured features:", error);
+    res.status(500).json({ error: error.message || "Internal server error" });
+  }
+};
+
+// Save structured (JSON, non-HTML) feature cards for a subcategory
+exports.addSubCategoryStructuredFeatures = async (req, res) => {
+  try {
+    const { categoryId, subCategoryId, structuredFeatures } = req.body;
+    if (!categoryId || !subCategoryId || !Array.isArray(structuredFeatures)) {
+      return res.status(400).json({ error: "categoryId, subCategoryId and structuredFeatures[] are required." });
+    }
+    const category = await categoriesDB.findById(categoryId);
+    if (!category) return res.status(404).json({ error: "Category not found." });
+
+    const sub = category.subcategories.id(subCategoryId);
+    if (!sub) return res.status(404).json({ error: "Subcategory not found." });
+
+    sub.structuredFeatures = structuredFeatures;
+    const savedCategory = await category.save();
+
+    res.status(200).json({
+      message: "Subcategory structured features saved successfully.",
+      structuredFeatures: savedCategory.subcategories.id(subCategoryId).structuredFeatures,
+    });
+  } catch (error) {
+    console.error("Error saving subcategory structured features:", error);
+    res.status(500).json({ error: error.message || "Internal server error" });
+  }
+};
+
 //delete features
 exports.deleteCategoryFeatures = async (req, res) => {
   try {

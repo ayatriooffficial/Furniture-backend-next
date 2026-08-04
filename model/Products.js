@@ -146,6 +146,44 @@ const productSchema = new mongoose.Schema({
   purchaseMode: [String],
   otherRoom: [String],
   productDescription: String,
+  // Reusable structured feature-card shape (same as roomMain/category) — plain text, no HTML
+  structuredFeatures: [
+    {
+      name: { type: String },
+      subHeading: { type: String },
+      description: { type: String },
+      tip: { type: String },
+      displayType: {
+        type: String,
+        enum: ["card", "cardSVG", "comparison", "tips"],
+        default: "card",
+      },
+      icon: { type: String },
+      cards: [
+        {
+          heading: { type: String },
+          description: { type: String },
+          svgUrl: { type: String },
+          cardType: {
+            type: String,
+            enum: ["card", "cardSVG", "comparison"],
+            default: "card",
+          },
+          leftHeading: { type: String },
+          rightHeading: { type: String },
+          columns: [{ name: { type: String } }],
+          rows: [
+            {
+              label: { type: String },
+              values: [{ type: String }],
+            },
+          ],
+          points: [{ text: { type: String } }],
+          pointsRight: [{ text: { type: String } }],
+        },
+      ],
+    },
+  ],
   coreValueIds: {
     type: Map,
     of: String,

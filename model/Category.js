@@ -1,5 +1,49 @@
 const { text } = require("body-parser");
 const mongoose = require("mongoose");
+
+// Reusable structured feature-card shape (same as roomMain features) — plain text, no HTML
+const StructuredCardSchema = new mongoose.Schema(
+  {
+    heading: { type: String },
+    description: { type: String },
+    svgUrl: { type: String },
+    cardType: {
+      type: String,
+      enum: ["card", "cardSVG", "comparison"],
+      default: "card",
+    },
+    leftHeading: { type: String },
+    rightHeading: { type: String },
+    columns: [{ name: { type: String } }],
+    rows: [
+      {
+        label: { type: String },
+        values: [{ type: String }],
+      },
+    ],
+    points: [{ text: { type: String } }],
+    pointsRight: [{ text: { type: String } }],
+  },
+  { _id: false }
+);
+
+const StructuredFeatureSchema = new mongoose.Schema(
+  {
+    name: { type: String },
+    subHeading: { type: String },
+    description: { type: String },
+    tip: { type: String },
+    displayType: {
+      type: String,
+      enum: ["card", "cardSVG", "comparison", "tips"],
+      default: "card",
+    },
+    icon: { type: String },
+    cards: [StructuredCardSchema],
+  },
+  { _id: false }
+);
+
 const FeatureSchema = new mongoose.Schema({
   title: { type: String },
   description: [{ type: String }],
@@ -71,6 +115,7 @@ const subcategorySchema = new mongoose.Schema({
     },
   ],
   features: [FeatureSchema],
+  structuredFeatures: [StructuredFeatureSchema],
   pdesc: {
     description: { type: String },
     linkText: [
@@ -172,6 +217,7 @@ const categorySchema = new mongoose.Schema({
     image: { type: String },
   },
   features: [FeatureSchema],
+  structuredFeatures: [StructuredFeatureSchema],
   pdesc: {
     description: { type: String },
   },
