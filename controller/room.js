@@ -1,7 +1,8 @@
 const Room = require("../model/room");
 const categoriesDB = require("../model/Category");
 const productsDB = require("../model/Products");
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
+const RoomTypeDB = require("../model/roomType");
 // POST: api/createRoom
 exports.createRoom = async (req, res) => {
  
@@ -119,59 +120,24 @@ exports.getAllRooms = async (req, res) => {
 
 exports.getTabsRoom = async (req, res) => {
   try {
-    const categories = await categoriesDB
-      .find()
-      .select("name subcategories")
-      .sort({ popularity: -1 });
+    const roomTypes = await RoomTypeDB.find({});
 
-      // console.log("These are categories: ",categories);
+    const rooms = await Promise.all(
+      roomTypes.map(async (type) => {
+        return await Room.find({
+          roomType: type.roomType,
+        }).limit(3);
+      })
+    );
 
-    let rooms = [];
+    // Flatten the nested arrays
+    const result = rooms.flat();
 
-    if (categories && categories.length > 0) {
-      for (let i = 0; i < categories.length; i++) {
-        const cat = categories[i];
-        // console.log("Subcategories are there: ",cat.subcategories);
-
-        // Check if subcategories exist and is not empty
-        if (!cat.subcategories || cat.subcategories.length === 0) {
-          continue; // Skip categories without subcategories
-        }
-
-        // Sort subcategories by popularity descending and pick the first one
-        const sortedSubs = cat.subcategories.sort(
-          (a, b) => (b.popularity || 0) - (a.popularity || 0)
-        );
-        const topSub = sortedSubs[0];
-
-        // Ensure we actually got a valid top subcategory name
-        if (!topSub || !topSub.name) {
-          continue;
-        }
-
-        const product = await productsDB
-          .findOne({
-            category: cat.name,
-            subcategory: topSub.name,
-          })
-          .select("productId")
-          .sort({ popularity: -1 });
-
-        // console.log("this is filtered product:",product);
-          
-        if (product && product.productId) {
-          const room = await Room.find({ productId: product.productId });
-          if (room && room.length > 0) {
-            rooms = [...rooms, ...room];
-          }
-        }
-      }
-    }
-    res.status(200).json(rooms);
+    return res.status(200).json(result);
   } catch (error) {
-    res
-      .status(500)
-      .json({ err: error.message || "Error while fetching rooms!" });
+    return res.status(500).json({
+      err: error.message || "Error while fetching rooms!",
+    });
   }
 };
 
