@@ -188,6 +188,11 @@ const roomSchema = new mongoose.Schema(
         tip: {
           type: String,
         },
+        tipBgColor: {
+          type: String,
+          enum: ["green", "yellow", "blue"],
+          default: "green",
+        },
         displayType: {
           type: String,
           required: true,

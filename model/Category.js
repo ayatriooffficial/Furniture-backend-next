@@ -33,6 +33,11 @@ const StructuredFeatureSchema = new mongoose.Schema(
     subHeading: { type: String },
     description: { type: String },
     tip: { type: String },
+    tipBgColor: {
+      type: String,
+      enum: ["green", "yellow", "blue"],
+      default: "green",
+    },
     displayType: {
       type: String,
       enum: ["card", "cardSVG", "comparison", "tips"],
