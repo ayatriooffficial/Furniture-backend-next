@@ -28,6 +28,7 @@ exports.createSuggestion = async (req, res) => {
       mainImage,
       position,
       features,
+      structuredFeatures,
       authorId,
     } = req.body;
 
@@ -219,6 +220,7 @@ exports.createSuggestion = async (req, res) => {
         products: fifthSliderProducts,
       },
       features: processedFeatures,
+      structuredFeatures: structuredFeatures || [],
       metadata: { title: metadataTitle },
       author: authorId || null,
     });

@@ -177,6 +177,49 @@ const suggestionSchema = new mongoose.Schema(
         icon: { type: String }, // For card1 display type
       }
     ],
+    // Reusable structured feature-card shape (same as roomMain/category) — plain text, no HTML
+    structuredFeatures: [
+      {
+        name: { type: String },
+        subHeading: { type: String },
+        description: { type: String },
+        tip: { type: String },
+        tipBgColor: {
+          type: String,
+          enum: ["green", "yellow", "blue"],
+          default: "green",
+        },
+        displayType: {
+          type: String,
+          enum: ["card", "cardSVG", "comparison", "tips"],
+          default: "card",
+        },
+        icon: { type: String },
+        cards: [
+          {
+            heading: { type: String },
+            description: { type: String },
+            svgUrl: { type: String },
+            cardType: {
+              type: String,
+              enum: ["card", "cardSVG", "comparison"],
+              default: "card",
+            },
+            leftHeading: { type: String },
+            rightHeading: { type: String },
+            columns: [{ name: { type: String } }],
+            rows: [
+              {
+                label: { type: String },
+                values: [{ type: String }],
+              },
+            ],
+            points: [{ text: { type: String } }],
+            pointsRight: [{ text: { type: String } }],
+          },
+        ],
+      },
+    ],
   },
   {
     timestamps: true,
