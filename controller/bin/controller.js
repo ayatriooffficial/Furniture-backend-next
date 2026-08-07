@@ -207,8 +207,8 @@ exports.createCategory = async (req, res) => {
           title: sanitizeString(sub?.metadata?.title, 100),
         },
         img: sanitizeString(uploadedSubCategoryImages[index] || sub?.img, 500),
-        isAccessories: !!sub?.isAccessories,
-        showInSubCategory: sub?.showInSubCategory !== false,
+        isAccessories: sub?.isAccessories === "true" || sub?.isAccessories === true,
+        showInSubCategory: sub?.showInSubCategory === true || sub?.showInSubCategory === "true",
         products: (Array.isArray(sub?.products) ? sub.products : [])
           .slice(0, 50)
           .map((p) => ({
@@ -246,7 +246,7 @@ exports.createCategory = async (req, res) => {
       metadata: {
         title: sanitizeString(metadataTitle, 100),
       },
-      showCalculator: !!showCalculator,
+      showCalculator: showCalculator === "true" || showCalculator === true,
       features: processedFeatures.filter(Boolean),
       pdesc: handlePdesc(req.body.pdesc),
       maintenanceDetails: (Array.isArray(maintenanceDetails)
@@ -1344,8 +1344,8 @@ exports.CreateSubCategory = async (req, res) => {
       h1title: sanitizeString(h1title, 100),
       pdesc: pdesc || [],
       metadata: { title: sanitizeString(metadataTitle, 100) || "" },
-      isAccessories: !!isAccessories,
-      showInSubCategory: showInSubCategory !== false,
+      isAccessories: isAccessories === "true" || isAccessories === true,
+      showInSubCategory: showInSubCategory === true || showInSubCategory === "true",
       features: Array.isArray(features) ? features : [],
     };
 
