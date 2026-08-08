@@ -154,6 +154,13 @@ exports.createCategory = async (req, res) => {
       ? req.files.subCategoriesImage.map(getUploadedFileUrl)
       : [];
 
+    const uploadedFirstImage = req.files?.firstImage?.[0]
+      ? getUploadedFileUrl(req.files.firstImage[0])
+      : "";
+    const uploadedSecondImage = req.files?.secondImage?.[0]
+      ? getUploadedFileUrl(req.files.secondImage[0])
+      : "";
+
     // 5. Validate required fields with better error messages
     if (!sanitizeString(name) || !sanitizeString(type)) {
       return res.status(400).json({
@@ -302,13 +309,13 @@ exports.createCategory = async (req, res) => {
         title: sanitizeString(firstGrid?.title, 100),
         description: sanitizeString(firstGrid?.description, 500),
         link: sanitizeString(firstGrid?.link, 500),
-        image: sanitizeString(firstGrid?.image, 500),
+        image: sanitizeString(uploadedFirstImage, 500),   // ← changed
       },
       secondGrid: {
         title: sanitizeString(secondGrid?.title, 100),
         description: sanitizeString(secondGrid?.description, 500),
         link: sanitizeString(secondGrid?.link, 500),
-        image: sanitizeString(secondGrid?.image, 500),
+        image: sanitizeString(uploadedSecondImage, 500),  // ← changed
       },
     });
 
