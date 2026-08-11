@@ -131,12 +131,14 @@ exports.createCategory = async (req, res) => {
       availableColors = [],
       availableServices = [],
       availableRatingTypes = [],
+      structuredFeatures = [],
       firstGrid = {},
       secondGrid = {},
     } = req.body;
 
     // Parse stringified JSON arrays from FormData
     features = parseJSON(features, []);
+    structuredFeatures = parseJSON(structuredFeatures, []);   
     subcategories = parseJSON(subcategories, []);
     maintenanceDetails = parseJSON(maintenanceDetails, []);
     installationDetails = parseJSON(installationDetails, []);
@@ -233,6 +235,8 @@ exports.createCategory = async (req, res) => {
               : "Tip",
             svg: sanitizeString(f?.svg, 500),
           })),
+          
+        structuredFeatures: Array.isArray(sub?.structuredFeatures) ? sub.structuredFeatures : [],
         faq: (Array.isArray(sub?.faq) ? sub.faq : []).slice(0, 20).map((f) => ({
           heading: sanitizeString(f?.heading, 200),
           description: sanitizeString(f?.description, 1000),
@@ -255,6 +259,7 @@ exports.createCategory = async (req, res) => {
       },
       showCalculator: showCalculator === "true" || showCalculator === true,
       features: processedFeatures.filter(Boolean),
+      structuredFeatures,
       pdesc: handlePdesc(req.body.pdesc),
       maintenanceDetails: (Array.isArray(maintenanceDetails)
         ? maintenanceDetails
