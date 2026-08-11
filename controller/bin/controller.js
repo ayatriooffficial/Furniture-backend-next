@@ -1333,8 +1333,21 @@ exports.CreateSubCategory = async (req, res) => {
       isAccessories,
       showInSubCategory,
       features,
+      structuredFeatures,
       faq,
     } = req.body;
+
+    const parseJSON = (value, defaultValue = []) => {
+      if (typeof value === "string") {
+        try {
+          return JSON.parse(value);
+        } catch (e) {
+          console.error("JSON Parse Error:", e);
+          return defaultValue;
+        }
+      }
+      return value || defaultValue;
+    };
 
     const image = req.files?.image;
     if (!image || image.length === 0) {
@@ -1359,6 +1372,7 @@ exports.CreateSubCategory = async (req, res) => {
       isAccessories: isAccessories === "true" || isAccessories === true,
       showInSubCategory: showInSubCategory === true || showInSubCategory === "true",
       features: Array.isArray(features) ? features : [],
+      structuredFeatures: parseJSON(structuredFeatures, []),
     };
 
     category.subcategories.push(newSubcategory);
