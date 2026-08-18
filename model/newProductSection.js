@@ -8,10 +8,16 @@ const newProductItemSchema = new mongoose.Schema({
   mainHeading: { type: String }
 });
 
+// Schema for rooms paired with room-specific offers
+const roomOfferSchema = new mongoose.Schema({
+  room: { type: mongoose.Schema.Types.ObjectId, ref: "Room", required: true },
+  offer: { type: String, required: true }
+}, { _id: false }); // Prevents generating extra _id fields for nested items if not needed
+
 const newProductSectionSchema = new mongoose.Schema({
   items: [newProductItemSchema],
   mode: { type: String, required: true },
-  rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Room" }],
+  rooms: [roomOfferSchema] // Updated to use the roomOfferSchema
 });
 
 const newProductSectionDB = mongoose.model(

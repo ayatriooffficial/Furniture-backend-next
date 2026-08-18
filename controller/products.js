@@ -955,6 +955,31 @@ exports.getAllProductsByOffer = async (req, res) => {
     //   return res.status(200).json(products);
     // }
 
+    //     if (type === "all") {
+    //   if (page && itemsPerPage) {
+    //     const skip = (page - 1) * itemsPerPage;
+    //     const products = await productsDB
+    //       .find({ isAccessories: false, offer: { $ne: null } })
+    //       .populate("author")
+    //       .skip(skip)
+    //       .limit(itemsPerPage);
+
+    //     const totalproducts = await productsDB.countDocuments({
+    //       isAccessories: false,
+    //       offer: { $ne: null },
+    //     });
+
+    //     return res.status(200).json({ products, totalproducts });
+    //   }
+
+    //   const products = await productsDB
+    //     .find({ isAccessories: false, offer: { $ne: null } })
+    //     .populate("author")
+    //     .sort({ popularity: -1 });
+
+    //   return res.status(200).json(products);
+    // }
+
     if (page && itemsPerPage) {
       const skip = (page - 1) * itemsPerPage;
       const products = await productsDB
