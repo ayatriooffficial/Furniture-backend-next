@@ -1,42 +1,54 @@
 const newProductSectionDB = require("../../model/newProductSection");
 const Room = require("../../model/room");
+const Category = require("../../model/Category");
 // POST: '/api/createnewProductSection'  - homepageRoutes.js
 exports.createProductSection = async (req, res) => {
   try {
     const mode = req.body.type;
-    const { room1, room2, room3, room4, offerRoom1, offerRoom2, offerRoom3, offerRoom4 } = req.body;
+    const { room1, room2, room3, room4, offerRoom1, offerRoom2, offerRoom3, offerRoom4, categoryRoom1, categoryRoom2, categoryRoom3, categoryRoom4 } = req.body;
     if (mode === "room") {
       if (!room1 || !room2 || !room3) {
         return res.status(400).json({ message: "Please select all rooms" });
       }
       let rooms = [];
       const roomData1 = await Room.findById(room1);
+      let cat1 = categoryRoom1 ? await Category.findOne({ name: categoryRoom1 }) : null;
       if (roomData1) {
-        rooms.push({room:roomData1._id, offer: offerRoom1});
+        let roomObj = {room:roomData1._id, offer: offerRoom1};
+        if (cat1) roomObj.category = cat1._id;
+        rooms.push(roomObj);
       } else {
-        // console.log(`Room 1 not found.`);
         return res.status(404).json({ message: "Room 1 not found." });
       }
+
       const roomData2 = await Room.findById(room2);
+      let cat2 = categoryRoom2 ? await Category.findOne({ name: categoryRoom2 }) : null;
       if (roomData2) {
-        rooms.push({room: roomData2._id, offer: offerRoom2});
+        let roomObj = {room:roomData2._id, offer: offerRoom2};
+        if (cat2) roomObj.category = cat2._id;
+        rooms.push(roomObj);
       } else {
-        // console.log(`Room 2 not found.`);
         return res.status(404).json({ message: "Room 2 not found." });
       }
+
       const roomData3 = await Room.findById(room3);
+      let cat3 = categoryRoom3 ? await Category.findOne({ name: categoryRoom3 }) : null;
       if (roomData3) {
-        rooms.push({room:roomData3._id, offer: offerRoom3});
+        let roomObj = {room:roomData3._id, offer: offerRoom3};
+        if (cat3) roomObj.category = cat3._id;
+        rooms.push(roomObj);
       } else {
-        // console.log(`Room 3 not found.`);
         return res.status(404).json({ message: "Room 3 not found." });
       }
+
       if (room4) {
         const roomData4 = await Room.findById(room4);
+        let cat4 = categoryRoom4 ? await Category.findOne({ name: categoryRoom4 }) : null;
         if (roomData4) {
-          rooms.push({room:roomData4._id, offer: offerRoom4});
+          let roomObj = {room:roomData4._id, offer: offerRoom4};
+          if (cat4) roomObj.category = cat4._id;
+          rooms.push(roomObj);
         } else {
-          // console.log(`Room 4 not found.`);
           return res.status(404).json({ message: "Room 4 not found." });
         }
       }
@@ -93,10 +105,16 @@ exports.createProductSection = async (req, res) => {
 // GET: '/api/getnewProductSection'  - homepageRoutes.js
 exports.getNewProductSection = async (req, res) => {
   try {
-    let info = await newProductSectionDB.find().populate({
-      path: "rooms.room",
-      model: Room,
-    });
+    let info = await newProductSectionDB.find().populate([
+      {
+        path: "rooms.room",
+        model: Room,
+      },
+      {
+        path: "rooms.category",
+        model: Category,
+      }
+    ]);
     res.status(200).json(info);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -946,9 +946,15 @@ exports.removeSpecialPrice = async (req, res) => {
 exports.getAllProductsByOffer = async (req, res) => {
   try {
     const { type } = req.params;
-    const { itemsPerPage, page } = req.query;
+    const { itemsPerPage, page, category } = req.query;
 
-    // console.log(itemsPerPage, page);
+    const query = {
+      offer: { $regex: new RegExp(type, "i") },
+      isAccessories: false,
+    };
+    if (category) {
+      query.category = category;
+    }
 
     // if (type === "all") {
     //   const products = await productsDB.find();
@@ -983,28 +989,18 @@ exports.getAllProductsByOffer = async (req, res) => {
     if (page && itemsPerPage) {
       const skip = (page - 1) * itemsPerPage;
       const products = await productsDB
-        .find({
-          offer: { $regex: new RegExp(type, "i") },
-          isAccessories: false,
-        })
+        .find(query)
         .populate("author")
         .skip(skip)
         .limit(itemsPerPage);
 
-      // console.log("Offer", products.length);
-
-      const Totalproducts = await productsDB.find({
-        offer: { $regex: new RegExp(type, "i") },
-      });
+      const Totalproducts = await productsDB.find(query);
       return res
         .status(200)
         .json({ products: products, totalproducts: Totalproducts.length });
     }
     const products = await productsDB
-      .find({
-        offer: { $regex: new RegExp(type, "i") },
-        isAccessories: false,
-      })
+      .find(query)
       .populate("author")
       .sort({ popularity: -1 });
     res.status(200).json(products);
