@@ -29,6 +29,7 @@ exports.createSuggestion = async (req, res) => {
       position,
       features,
       structuredFeatures,
+      faqs,
       authorId,
     } = req.body;
 
@@ -180,6 +181,16 @@ exports.createSuggestion = async (req, res) => {
         }))
       : [];
 
+    // FAQs: keep only entries that have both title and description
+    const processedFaqs = Array.isArray(faqs)
+      ? faqs
+          .filter((faq) => faq && faq.title && faq.description)
+          .map((faq) => ({
+            title: faq.title,
+            description: faq.description,
+          }))
+      : [];
+
     const newSuggestion = new suggestionDB({
       heading,
       summary,
@@ -221,6 +232,7 @@ exports.createSuggestion = async (req, res) => {
       },
       features: processedFeatures,
       structuredFeatures: structuredFeatures || [],
+      faqs: processedFaqs,
       metadata: { title: metadataTitle },
       author: authorId || null,
     });

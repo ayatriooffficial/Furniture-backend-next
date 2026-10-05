@@ -155,6 +155,7 @@ const suggestionSchema = new mongoose.Schema(
           "forthSlider",
           "fifthSlider",
           "features",
+          "faqs",
         ],
         type: String,
         required: true,
@@ -218,6 +219,13 @@ const suggestionSchema = new mongoose.Schema(
             pointsRight: [{ text: { type: String } }],
           },
         ],
+      },
+    ],
+    // FAQs — same shape as rooms: { title, description }
+    faqs: [
+      {
+        title: { type: String, trim: true },
+        description: { type: String, trim: true },
       },
     ],
   },
